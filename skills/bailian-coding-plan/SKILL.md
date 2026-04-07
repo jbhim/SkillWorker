@@ -37,11 +37,13 @@ description: Use when needing to switch Claude Code model to Alibaba Bailian pla
 ```
 
 **工作流程：**
-1. 展示按品牌分组的可用模型列表
-2. 提示用户选择目标模型
+1. 使用 `AskUserQuestion` 展示模型选项列表（单选）
+2. 用户选择目标模型
 3. 读取并修改 `~/.claude/settings.json` 中的 `env.ANTHROPIC_MODEL`
 4. 保留其他 env 配置不变
-5. 提示用户重启 Claude Code 使配置生效
+5. 提示用户选择切换方式：
+   - 使用 `/model "<model-name>"` 立即切换当前会话
+   - 或重启 Claude Code 使配置永久生效
 
 ## 实现
 
@@ -50,9 +52,9 @@ description: Use when needing to switch Claude Code model to Alibaba Bailian pla
 ```
 用户调用技能
     ↓
-展示按品牌和能力分组的模型列表
+使用 AskUserQuestion 展示模型选项
     ↓
-提示用户输入选择（1-8）
+用户选择目标模型
     ↓
 读取 ~/.claude/settings.json
     ↓
@@ -62,7 +64,7 @@ description: Use when needing to switch Claude Code model to Alibaba Bailian pla
     ↓
 写回配置文件
     ↓
-提示重启 Claude Code 使配置生效
+提示用户：可重启 Claude Code 或使用 /model 命令立即切换
 ```
 
 **切换方式：**
@@ -104,7 +106,7 @@ description: Use when needing to switch Claude Code model to Alibaba Bailian pla
 ## 常见错误
 
 - **选择不适合任务的模型**：查看能力列——视觉理解任务需要选择支持视觉的模型
-- **未重启 Claude Code**：修改配置文件后必须重启才能生效
+- **未重启 Claude Code**：修改配置文件后必须重启才能永久生效（或使用 `/model` 命令立即切换当前会话）
 - **误删其他 env 配置**：修改时保留 `ANTHROPIC_AUTH_TOKEN`、`ANTHROPIC_BASE_URL` 等其他环境变量
 - **配置文件路径错误**：Claude Code 配置文件在用户主目录下的 `.claude/settings.json`
 
@@ -113,40 +115,37 @@ description: Use when needing to switch Claude Code model to Alibaba Bailian pla
 ```
 用户: /skill bailian-coding-plan
 
-Claude: 可用的百炼平台模型：
+Claude: 正在获取可用的百炼平台模型...
 
-【千问】
-1. qwen3.5-plus - 文本生成、深度思考、视觉理解
-2. qwen3-max-2026-01-23 - 文本生成、深度思考
-3. qwen3-coder-next - 文本生成
-4. qwen3-coder-plus - 文本生成
+[使用 AskUserQuestion 工具展示选项]
 
-【智谱】
-5. glm-5 - 文本生成、深度思考
-6. glm-4.7 - 文本生成、深度思考
+请选择要切换的模型：
+○ qwen3.5-plus (千问) - 文本生成、深度思考、视觉理解
+○ qwen3-max-2026-01-23 (千问) - 文本生成、深度思考
+○ qwen3-coder-next (千问) - 文本生成
+○ qwen3-coder-plus (千问) - 文本生成
+○ glm-5 (智谱) - 文本生成、深度思考
+○ glm-4.7 (智谱) - 文本生成、深度思考
+○ kimi-k2.5 (Kimi) - 文本生成、深度思考、视觉理解
+○ MiniMax-M2.5 (MiniMax) - 文本生成、深度思考
 
-【Kimi】
-7. kimi-k2.5 - 文本生成、深度思考、视觉理解
+[用户选择: kimi-k2.5]
 
-【MiniMax】
-8. MiniMax-M2.5 - 文本生成、深度思考
-
-请选择模型（输入数字 1-8）：
-
-用户: 1
-
-Claude: 正在切换至 qwen3.5-plus...
+Claude: 正在切换至 kimi-k2.5...
 
 已修改配置文件：~\.claude\settings.json
 
 ```json
 {
   "env": {
-    "ANTHROPIC_MODEL": "qwen3.5-plus"
+    "ANTHROPIC_MODEL": "kimi-k2.5"
   }
 }
 ```
 
 其他 env 配置（如 ANTHROPIC_AUTH_TOKEN、ANTHROPIC_BASE_URL）保持不变。
-请重启 Claude Code 使配置生效。
+
+**切换方式（二选一）：**
+1. **立即生效（推荐）**：使用命令 `/model "kimi-k2.5"` 将当前会话切换到新模型
+2. **下次生效**：重启 Claude Code 使配置永久生效
 ```

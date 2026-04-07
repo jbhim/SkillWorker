@@ -1,4 +1,4 @@
-# MySkillWorker
+# SkillWorker
 
 个人 Claude Code Skills 开发仓库，用于管理和开发自定义技能。
 
@@ -21,6 +21,11 @@
 
 ```bash
 npx skills add ./skills
+```
+或者
+
+```bash
+npx skills add jbhim/SkillWorker
 ```
 
 或安装单个 skill：
