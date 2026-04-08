@@ -109,7 +109,7 @@ description: Use when configuring custom AI providers in OpenCode via opencode.j
 - `/v1/responses` 端点
 - OpenAI 的 responses API
 
-```json
+```json5
 // OpenAI 兼容（chat/completions
 "npm": "@ai-sdk/openai-compatible"
 
