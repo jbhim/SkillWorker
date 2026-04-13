@@ -7,7 +7,8 @@ description: Use when needing to switch Claude Code model to Alibaba Bailian pla
 
 ## 概述
 
-在 Claude Code 中切换至阿里云百炼平台的大语言模型。通过修改 `~/.claude/settings.json` 中的 `env.ANTHROPIC_MODEL` 配置实现模型切换，重启后生效。
+在 Claude Code 中切换至阿里云百炼平台的大语言模型。通过修改 `~/.claude/settings.json` 中的 `env.ANTHROPIC_MODEL`
+配置实现模型切换，重启后生效。
 
 ## 何时使用
 
@@ -17,25 +18,26 @@ description: Use when needing to switch Claude Code model to Alibaba Bailian pla
 
 **支持的品牌：**
 
-| 品牌 | 可用模型 |
-|------|----------|
-| 千问 | qwen3.5-plus, qwen3-max-2026-01-23, qwen3-coder-next, qwen3-coder-plus |
-| 智谱 | glm-5, glm-4.7 |
-| Kimi | kimi-k2.5 |
-| MiniMax | MiniMax-M2.5 |
+| 品牌      | 可用模型                                                                                |
+|---------|-------------------------------------------------------------------------------------|
+| 千问      | qwen3.6-plus,qwen3.5-plus, qwen3-max-2026-01-23, qwen3-coder-next, qwen3-coder-plus |
+| 智谱      | glm-5, glm-4.7                                                                      |
+| Kimi    | kimi-k2.5                                                                           |
+| MiniMax | MiniMax-M2.5                                                                        |
 
 **模型能力对照：**
 
-| 模型 | 能力 |
-|------|------|
-| qwen3.5-plus | 文本生成、深度思考、视觉理解 |
-| qwen3-max-2026-01-23 | 文本生成、深度思考 |
-| qwen3-coder-next | 文本生成 |
-| qwen3-coder-plus | 文本生成 |
-| glm-5 | 文本生成、深度思考 |
-| glm-4.7 | 文本生成、深度思考 |
-| kimi-k2.5 | 文本生成、深度思考、视觉理解 |
-| MiniMax-M2.5 | 文本生成、深度思考 |
+| 模型                   | 能力                   |
+|----------------------|----------------------|
+| qwen3.6-plus         | 文本生成、深度思考、视觉理解（最新版本） |
+| qwen3.5-plus         | 文本生成、深度思考、视觉理解       |
+| qwen3-max-2026-01-23 | 文本生成、深度思考            |
+| qwen3-coder-next     | 文本生成                 |
+| qwen3-coder-plus     | 文本生成                 |
+| glm-5                | 文本生成、深度思考            |
+| glm-4.7              | 文本生成、深度思考            |
+| kimi-k2.5            | 文本生成、深度思考、视觉理解       |
+| MiniMax-M2.5         | 文本生成、深度思考            |
 
 ## 快速参考
 
@@ -46,15 +48,16 @@ description: Use when needing to switch Claude Code model to Alibaba Bailian pla
 ```
 
 **工作流程：**
+
 1. 由于模型选项超过 4 个，使用以下两种方式之一让用户选择模型：
-   - **方式一（分步选择）**：先用 `AskUserQuestion` 展示品牌选项（单选）：千问、智谱、Kimi、MiniMax，然后展示该品牌下的具体模型
-   - **方式二（直接输入）**：让用户直接输入想要的模型名称（如 `kimi-k2.5`）
+    - **方式一（分步选择）**：先用 `AskUserQuestion` 展示品牌选项（单选）：千问、智谱、Kimi、MiniMax，然后展示该品牌下的具体模型
+    - **方式二（直接输入）**：让用户直接输入想要的模型名称（如 `kimi-k2.5`）
 2. 获取目标模型名称
 3. 读取并修改 `~/.claude/settings.json` 中的 `env.ANTHROPIC_MODEL`
 4. 保留其他 env 配置不变
 5. 提示用户选择切换方式：
-   - 使用 `/model <model-name>` 立即切换当前会话（注意：不带双引号）
-   - 或重启 Claude Code 使配置永久生效
+    - 使用 `/model <model-name>` 立即切换当前会话（注意：不带双引号）
+    - 或重启 Claude Code 使配置永久生效
 
 ## 实现
 
@@ -90,18 +93,18 @@ description: Use when needing to switch Claude Code model to Alibaba Bailian pla
 
 修改 Claude Code 用户级配置文件：
 
-| 平台 | 配置文件路径 |
-|------|-------------|
-| Windows | `%USERPROFILE%\.claude\settings.json` |
-| macOS/Linux | `~/.claude/settings.json` |
+| 平台          | 配置文件路径                                |
+|-------------|---------------------------------------|
+| Windows     | `%USERPROFILE%\.claude\settings.json` |
+| macOS/Linux | `~/.claude/settings.json`             |
 
 **配置文件修改：**
 
 ```json
 {
-  "env": {
-    "ANTHROPIC_MODEL": "<model-name>"
-  }
+    "env": {
+        "ANTHROPIC_MODEL": "<model-name>"
+    }
 }
 ```
 
@@ -111,16 +114,16 @@ description: Use when needing to switch Claude Code model to Alibaba Bailian pla
 
 **模型配置映射：**
 
-| 模型名称 | 配置值 |
-|----------|--------|
-| qwen3.5-plus | `qwen3.5-plus` |
+| 模型名称                 | 配置值                    |
+|----------------------|------------------------|
+| qwen3.5-plus         | `qwen3.5-plus`         |
 | qwen3-max-2026-01-23 | `qwen3-max-2026-01-23` |
-| qwen3-coder-next | `qwen3-coder-next` |
-| qwen3-coder-plus | `qwen3-coder-plus` |
-| glm-5 | `glm-5` |
-| glm-4.7 | `glm-4.7` |
-| kimi-k2.5 | `kimi-k2.5` |
-| MiniMax-M2.5 | `MiniMax-M2.5` |
+| qwen3-coder-next     | `qwen3-coder-next`     |
+| qwen3-coder-plus     | `qwen3-coder-plus`     |
+| glm-5                | `glm-5`                |
+| glm-4.7              | `glm-4.7`              |
+| kimi-k2.5            | `kimi-k2.5`            |
+| MiniMax-M2.5         | `MiniMax-M2.5`         |
 
 ## 常见错误
 
@@ -194,6 +197,8 @@ Claude: 正在切换至 kimi-k2.5...
 其他 env 配置（如 ANTHROPIC_AUTH_TOKEN、ANTHROPIC_BASE_URL）保持不变。
 
 **切换方式（二选一）：**
+
 1. **立即生效（推荐）**：使用命令 `/model kimi-k2.5` 将当前会话切换到新模型（注意：不带双引号）
 2. **下次生效**：重启 Claude Code 使配置永久生效
+
 ```
