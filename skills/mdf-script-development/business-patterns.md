@@ -30,12 +30,12 @@
 #### 1. 盘到标识联动
 
 ```javascript
-viewModel.getGridModel('bodyvos').on('afterCellValueChange', function (data) {
-    var grid = viewModel.getGridModel('bodyvos');
-    var rowIndex = data.rowIndex;
+viewModel.getGridModel('bodyvos').on('afterCellValueChange', (data) => {
+    const grid = viewModel.getGridModel('bodyvos');
+    const rowIndex = data.rowIndex;
 
     if (data.cellName === 'inventory_flag') {
-        var isFound = data.value;  // true = 盘到, false = 未盘到
+        const isFound = data.value;  // true = 盘到, false = 未盘到
 
         if (isFound) {
             // 盘到：设置核实结果为"相符"
@@ -50,10 +50,10 @@ viewModel.getGridModel('bodyvos').on('afterCellValueChange', function (data) {
 
     // _after 字段变更时计算差异
     if (data.cellName.endsWith('_after')) {
-        var row = grid.getRow(rowIndex);
-        var beforeKey = data.cellName.replace('_after', '_before');
-        var beforeVal = row[beforeKey];
-        var afterVal = data.value;
+        const row = grid.getRow(rowIndex);
+        const beforeKey = data.cellName.replace('_after', '_before');
+        const beforeVal = row[beforeKey];
+        const afterVal = data.value;
 
         if (beforeVal !== afterVal) {
             // 值变化了，记录差异
@@ -71,9 +71,9 @@ viewModel.getGridModel('bodyvos').on('afterCellValueChange', function (data) {
 ```javascript
 // 检查 before/after 是否完全匹配
 function isBeforeAfterAllMatch(row) {
-    var beforeKeys = Object.keys(row).filter(function (k) { return k.endsWith('_before'); });
-    for (var i = 0; i < beforeKeys.length; i++) {
-        var afterKey = beforeKeys[i].replace('_before', '_after');
+    const beforeKeys = Object.keys(row).filter((k) => k.endsWith('_before'));
+    for (let i = 0; i < beforeKeys.length; i++) {
+        const afterKey = beforeKeys[i].replace('_before', '_after');
         if (row[beforeKeys[i]] !== row[afterKey]) {
             return false;
         }
@@ -83,10 +83,10 @@ function isBeforeAfterAllMatch(row) {
 
 // 获取差异字段列表
 function getBeforeAfterNotMatch(row) {
-    var diffs = [];
-    var beforeKeys = Object.keys(row).filter(function (k) { return k.endsWith('_before'); });
-    for (var i = 0; i < beforeKeys.length; i++) {
-        var afterKey = beforeKeys[i].replace('_before', '_after');
+    const diffs = [];
+    const beforeKeys = Object.keys(row).filter((k) => k.endsWith('_before'));
+    for (let i = 0; i < beforeKeys.length; i++) {
+        const afterKey = beforeKeys[i].replace('_before', '_after');
         if (row[beforeKeys[i]] !== row[afterKey]) {
             diffs.push(beforeKeys[i].replace('_before', ''));
         }
@@ -96,17 +96,17 @@ function getBeforeAfterNotMatch(row) {
 
 // 清空 After 字段
 function clearTargetAfterProps(row) {
-    var afterKeys = Object.keys(row).filter(function (k) { return k.endsWith('_after'); });
-    for (var i = 0; i < afterKeys.length; i++) {
+    const afterKeys = Object.keys(row).filter((k) => k.endsWith('_after'));
+    for (let i = 0; i < afterKeys.length; i++) {
         row[afterKeys[i]] = null;
     }
 }
 
 // 复制 Before 到 After
 function copyBeforeToAfter(row) {
-    var beforeKeys = Object.keys(row).filter(function (k) { return k.endsWith('_before'); });
-    for (var i = 0; i < beforeKeys.length; i++) {
-        var afterKey = beforeKeys[i].replace('_before', '_after');
+    const beforeKeys = Object.keys(row).filter((k) => k.endsWith('_before'));
+    for (let i = 0; i < beforeKeys.length; i++) {
+        const afterKey = beforeKeys[i].replace('_before', '_after');
         row[afterKey] = row[beforeKeys[i]];
     }
 }
@@ -115,21 +115,21 @@ function copyBeforeToAfter(row) {
 #### 3. Excel 导入处理（移动端）
 
 ```javascript
-viewModel.on('beforeImportRender', function (data) {
-    var rows = data.rows || [];
-    var grid = viewModel.getGridModel('bodyvos');
-    var existingRows = grid ? grid.getAllData() : [];
+viewModel.on('beforeImportRender', (data) => {
+    const rows = data.rows || [];
+    const grid = viewModel.getGridModel('bodyvos');
+    const existingRows = grid ? grid.getAllData() : [];
 
-    var updateOperations = [];
-    var insertOperations = [];
+    const updateOperations = [];
+    const insertOperations = [];
 
-    for (var i = 0; i < rows.length; i++) {
-        var importRow = rows[i];
-        var equipCode = importRow.equip_code;
+    for (let i = 0; i < rows.length; i++) {
+        const importRow = rows[i];
+        const equipCode = importRow.equip_code;
 
         // 查找是否已存在
-        var existingIdx = -1;
-        for (var j = 0; j < existingRows.length; j++) {
+        let existingIdx = -1;
+        for (let j = 0; j < existingRows.length; j++) {
             if (existingRows[j].equip_code === equipCode) {
                 existingIdx = j;
                 break;
@@ -138,7 +138,7 @@ viewModel.on('beforeImportRender', function (data) {
 
         if (existingIdx >= 0) {
             // 更新操作
-            var merged = Object.assign({}, existingRows[existingIdx]);
+            const merged = Object.assign({}, existingRows[existingIdx]);
             // 处理 inventory_flag
             merged.inventory_flag = (importRow.inventory_flag === '是');
             // 复制 before 到 after（如果需要）
@@ -146,15 +146,15 @@ viewModel.on('beforeImportRender', function (data) {
             updateOperations.push({ index: existingIdx, row: merged });
         } else {
             // 新增操作
-            var newRow = buildNewRowFromImport(importRow);
+            const newRow = buildNewRowFromImport(importRow);
             insertOperations.push(newRow);
         }
     }
 
     // 批量更新
     if (updateOperations.length > 0) {
-        var indexes = updateOperations.map(function (op) { return op.index; });
-        var rowObjs = updateOperations.map(function (op) { return op.row; });
+        const indexes = updateOperations.map((op) => op.index);
+        const rowObjs = updateOperations.map((op) => op.row);
         grid.updateRows(indexes, rowObjs);
     }
 
@@ -199,18 +199,18 @@ viewModel.on('beforeImportRender', function (data) {
 ### 主单脚本模板
 
 ```javascript
-viewModel.on('customInit', function () {
+viewModel.on('customInit', () => {
     viewModel.enableFeature('lazyLoadByPage');
     viewModel.enableFeature('asyncSave');
     viewModel.enableFeature('filteringCrossPage');
 });
 
-viewModel.on('beforePush', function () {
-    var grid = viewModel.getGridModel('bodyvos');
+viewModel.on('beforePush', () => {
+    const grid = viewModel.getGridModel('bodyvos');
     if (!grid) return true;
-    var rows = grid.getRows();
+    const rows = grid.getRows();
 
-    for (var i = 0; i < rows.length; i++) {
+    for (let i = 0; i < rows.length; i++) {
         if (!rows[i].pk_maintenance_unit || !rows[i].pk_maintenance_unit_name) {
             cb.utils.alert('第 ' + (i + 1) + ' 行缺少维保单位', 'error');
             return false;
@@ -227,7 +227,7 @@ viewModel.on('beforePush', function () {
 ### 子单/孙单组织锁定
 
 ```javascript
-viewModel.get('orgId_name').on('beforeValueChange', function () {
+viewModel.get('orgId_name').on('beforeValueChange', () => {
     // 编辑模式下锁定组织，禁止修改
     return false;
 });
@@ -239,15 +239,15 @@ viewModel.get('orgId_name').on('beforeValueChange', function () {
 function querySuppliers(names) {
     if (!names || names.length === 0) return;
 
-    var domainKey = viewModel.getDomainKey();
-    var proxy = cb.rest.DynamicProxy.create({
+    const domainKey = viewModel.getDomainKey();
+    const proxy = cb.rest.DynamicProxy.create({
         querySuppliers: {
             url: '/api/supplier/batchCreate?domainKey=' + domainKey,
             method: 'POST'
         }
     });
 
-    proxy.querySuppliers({ supplierNames: names }, function (err, result) {
+    proxy.querySuppliers({ supplierNames: names }, (err, result) => {
         if (err) {
             cb.utils.alert('供应商创建失败: ' + err.message, 'warning');
             return;
@@ -274,20 +274,20 @@ function querySuppliers(names) {
 #### 项目选择联动
 
 ```javascript
-viewModel.get('pk_project').on('afterValueChange', function (data) {
-    var projectId = data.value;
+viewModel.get('pk_project').on('afterValueChange', (data) => {
+    const projectId = data.value;
     if (!projectId) return;
 
     // 查询项目信息并填充表头
-    var domainKey = viewModel.getDomainKey();
-    var proxy = cb.rest.DynamicProxy.create({
+    const domainKey = viewModel.getDomainKey();
+    const proxy = cb.rest.DynamicProxy.create({
         queryProject: {
             url: '/api/project/query?domainKey=' + domainKey,
             method: 'GET'
         }
     });
 
-    proxy.queryProject({ pk_project: projectId }, function (err, result) {
+    proxy.queryProject({ pk_project: projectId }, (err, result) => {
         if (err) { cb.utils.alert(err.message, 'error'); return; }
         if (result) {
             // 填充表头
@@ -303,10 +303,10 @@ viewModel.get('pk_project').on('afterValueChange', function (data) {
 });
 
 function fillSubTable(gridName, items) {
-    var grid = viewModel.getGridModel(gridName);
+    const grid = viewModel.getGridModel(gridName);
     if (!grid || !items || items.length === 0) return;
     grid.clear();
-    items.forEach(function (item) {
+    items.forEach((item) => {
         grid.appendRow(item);
     });
 }
@@ -315,9 +315,9 @@ function fillSubTable(gridName, items) {
 #### 实物编码选择联动
 
 ```javascript
-viewModel.getGridModel('bodyvos').on('beforeBrowse', function (arg) {
+viewModel.getGridModel('bodyvos').on('beforeBrowse', (arg) => {
     if (arg.cellName === 'equip_code') {
-        var orgId = viewModel.get('pk_org').getValue();
+        const orgId = viewModel.get('pk_org').getValue();
         arg.context.setFilter({
             isExtend: true,
             simpleVOs: [{ field: 'pk_org', op: 'eq', value1: orgId }]
@@ -325,14 +325,14 @@ viewModel.getGridModel('bodyvos').on('beforeBrowse', function (arg) {
     }
 });
 
-viewModel.getGridModel('bodyvos').on('afterCellValueChange', function (data) {
+viewModel.getGridModel('bodyvos').on('afterCellValueChange', (data) => {
     if (data.cellName === 'equip_code') {
-        var grid = viewModel.getGridModel('bodyvos');
-        var rowIndex = data.rowIndex;
-        var equipCode = data.value;
+        const grid = viewModel.getGridModel('bodyvos');
+        const rowIndex = data.rowIndex;
+        const equipCode = data.value;
 
         // 查询卡片信息
-        queryAssetCard(equipCode, function (card) {
+        queryAssetCard(equipCode, (card) => {
             if (card) {
                 grid.updateRow(rowIndex, {
                     pk_asset: card.pk_asset,
@@ -353,26 +353,26 @@ viewModel.getGridModel('bodyvos').on('afterCellValueChange', function (data) {
 资产变动单支持多种变动类型，每种类型需要展示不同的字段组合：
 
 ```javascript
-viewModel.get('transType').on('afterValueChange', function (data) {
-    var transType = data.value;
+viewModel.get('transType').on('afterValueChange', (data) => {
+    const transType = data.value;
     // 根据变动类型显示/隐藏字段
     toggleFieldsByTransType(transType);
 });
 
 function toggleFieldsByTransType(transType) {
-    var fieldGroups = {
+    const fieldGroups = {
         '4A35-01': ['target_dept', 'target_user', 'target_location'],       // 调拨
         '4A35-01-01': ['owned_target_dept'],                                 // 自有调拨
         '4A35-01-02': ['entrusted_target_dept']                              // 受托调拨
     };
 
-    var showFields = fieldGroups[transType] || [];
-    var allFields = getAllChangeFields();
+    const showFields = fieldGroups[transType] || [];
+    const allFields = getAllChangeFields();
 
-    allFields.forEach(function (fieldId) {
-        var field = viewModel.get(fieldId);
+    allFields.forEach((fieldId) => {
+        const field = viewModel.get(fieldId);
         if (field) {
-            var shouldShow = showFields.indexOf(fieldId) !== -1;
+            const shouldShow = showFields.indexOf(fieldId) !== -1;
             field.setVisible(shouldShow);
         }
     });
@@ -384,25 +384,25 @@ function toggleFieldsByTransType(transType) {
 ### 拆分逻辑
 
 ```javascript
-viewModel.get('btnDivide') && viewModel.get('btnDivide').on('click', function () {
-    var grid = viewModel.getGridModel('bodyvos');
-    var indexes = grid.getSelectedRowIndexes();
+viewModel.get('btnDivide') && viewModel.get('btnDivide').on('click', () => {
+    const grid = viewModel.getGridModel('bodyvos');
+    const indexes = grid.getSelectedRowIndexes();
 
     if (!indexes || indexes.length === 0) {
         cb.utils.alert('请选择要拆分的资产', 'warning');
         return;
     }
 
-    cb.utils.confirm('确定拆分选中的资产？', function () {
-        var domainKey = viewModel.getDomainKey();
-        var proxy = cb.rest.DynamicProxy.create({
+    cb.utils.confirm('确定拆分选中的资产？', () => {
+        const domainKey = viewModel.getDomainKey();
+        const proxy = cb.rest.DynamicProxy.create({
             divideAsset: {
                 url: '/api/asset/divide?domainKey=' + domainKey,
                 method: 'POST'
             }
         });
 
-        proxy.divideAsset({ ids: indexes }, function (err, result) {
+        proxy.divideAsset({ ids: indexes }, (err, result) => {
             if (err) { cb.utils.alert(err.message, 'error'); return; }
             cb.utils.alert('拆分成功', 'success');
             viewModel.execute('refresh');
@@ -416,13 +416,13 @@ viewModel.get('btnDivide') && viewModel.get('btnDivide').on('click', function ()
 ### 任务分配
 
 ```javascript
-viewModel.on('customInit', function () {
+viewModel.on('customInit', () => {
     // 列表页添加自定义按钮
 });
 
-viewModel.get('btnAssign') && viewModel.get('btnAssign').on('click', function () {
-    var grid = viewModel.getGridModel();
-    var selectedRows = grid.getSelectedRowIndexes();
+viewModel.get('btnAssign') && viewModel.get('btnAssign').on('click', () => {
+    const grid = viewModel.getGridModel();
+    const selectedRows = grid.getSelectedRowIndexes();
 
     if (!selectedRows || selectedRows.length === 0) {
         cb.utils.alert('请选择要分配的任务', 'warning');
@@ -430,15 +430,15 @@ viewModel.get('btnAssign') && viewModel.get('btnAssign').on('click', function ()
     }
 
     // 调用分配 API
-    var domainKey = viewModel.getDomainKey();
-    var proxy = cb.rest.DynamicProxy.create({
+    const domainKey = viewModel.getDomainKey();
+    const proxy = cb.rest.DynamicProxy.create({
         assignTask: {
             url: '/api/task/assign?domainKey=' + domainKey,
             method: 'POST'
         }
     });
 
-    proxy.assignTask({ ids: selectedRows }, function (err, result) {
+    proxy.assignTask({ ids: selectedRows }, (err, result) => {
         if (err) { cb.utils.alert(err.message, 'error'); return; }
         cb.utils.alert('分配成功', 'success');
         viewModel.execute('refresh');
@@ -451,8 +451,8 @@ viewModel.get('btnAssign') && viewModel.get('btnAssign').on('click', function ()
 不同事务类型需要不同的按钮和字段行为：
 
 ```javascript
-viewModel.on('afterLoadData', function () {
-    var transType = viewModel.get('transType').getValue();
+viewModel.on('afterLoadData', () => {
+    const transType = viewModel.get('transType').getValue();
 
     // 根据事务类型隐藏按钮
     if (transType === '4A35-01-02') {
@@ -486,8 +486,8 @@ viewModel.get('userDefines__T0003').setValue(value);
 ```javascript
 // 获取北京时间日期
 function getDate() {
-    var date = new Date();
-    var utc8Date = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+    const date = new Date();
+    const utc8Date = new Date(date.getTime() + 8 * 60 * 60 * 1000);
     return utc8Date.toISOString().split('T')[0];
 }
 
@@ -495,16 +495,16 @@ function getDate() {
 function calculateNextCheckDate(lastCheckDate, checkPeriod, calcMethod) {
     if (!lastCheckDate || !checkPeriod) return '';
 
-    var date = new Date(lastCheckDate);
+    const date = new Date(lastCheckDate);
     if (calcMethod === 'byMonth') {
         date.setMonth(date.getMonth() + checkPeriod);
     } else if (calcMethod === 'byYear') {
         date.setFullYear(date.getFullYear() + checkPeriod);
     }
 
-    var y = date.getFullYear();
-    var m = String(date.getMonth() + 1).padStart(2, '0');
-    var d = String(date.getDate()).padStart(2, '0');
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
     return y + '-' + m + '-' + d;
 }
 ```

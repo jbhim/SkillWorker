@@ -7,13 +7,13 @@
 最常用模式：当某个单元格值改变时，联动更新同其他单元格或触发 API 调用。
 
 ```javascript
-viewModel.getGridModel('bodyvos').on('afterCellValueChange', function (data) {
-    var grid = viewModel.getGridModel('bodyvos');
-    var rowIndex = data.rowIndex;
-    var cellName = data.cellName;
+viewModel.getGridModel('bodyvos').on('afterCellValueChange', (data) => {
+    const grid = viewModel.getGridModel('bodyvos');
+    const rowIndex = data.rowIndex;
+    const cellName = data.cellName;
 
     if (cellName === 'is_confirmed') {
-        var confirmed = data.value;
+        const confirmed = data.value;
         // 联动设置同其他单元格
         grid.setCellValue(rowIndex, 'confirm_time', new Date().toISOString());
         grid.setCellState(rowIndex, 'confirm_remark', 'disabled', !confirmed);
@@ -21,8 +21,8 @@ viewModel.getGridModel('bodyvos').on('afterCellValueChange', function (data) {
 
     if (cellName === 'equip_code') {
         // 装备编码变化后查询并填充装备信息
-        var equipCode = data.value;
-        queryEquipInfo(equipCode, function (equip) {
+        const equipCode = data.value;
+        queryEquipInfo(equipCode, (equip) => {
             if (equip) {
                 grid.updateRow(rowIndex, {
                     equip_name: equip.name,
@@ -39,7 +39,7 @@ viewModel.getGridModel('bodyvos').on('afterCellValueChange', function (data) {
 
 ```javascript
 function batchSetCellState(gridModel, rowIndex, keys, stateKey, value) {
-    keys.forEach(function (key) {
+    keys.forEach((key) => {
         gridModel.setCellState(rowIndex, key, stateKey, value);
     });
 }
@@ -54,19 +54,19 @@ batchSetCellState(grid, rowIndex,
 ## 字段值变更联动
 
 ```javascript
-viewModel.get('pk_org').on('afterValueChange', function (data) {
+viewModel.get('pk_org').on('afterValueChange', (data) => {
     // 组织变化后联动更新下属单位
-    var orgId = data.value;
+    const orgId = data.value;
     if (orgId) {
         // 触发查询并填充
-        querySubUnits(orgId, function (units) {
+        querySubUnits(orgId, (units) => {
             viewModel.get('pk_unit').setValue(units[0].id);
         });
     }
 });
 
 // 阻止值变更
-viewModel.get('orgId_name').on('beforeValueChange', function () {
+viewModel.get('orgId_name').on('beforeValueChange', () => {
     // 编辑模式下禁止修改组织
     if (viewModel.mode === 'edit') {
         return false;
@@ -78,9 +78,9 @@ viewModel.get('orgId_name').on('beforeValueChange', function () {
 
 ```javascript
 // 标准模式：守卫 + 点击处理
-viewModel.get('button31if') && viewModel.get('button31if').on('click', function () {
+viewModel.get('button31if') && viewModel.get('button31if').on('click', () => {
     // 1. 获取当前数据
-    var data = viewModel.getAllData();
+    const data = viewModel.getAllData();
 
     // 2. 前置校验
     if (!data.header || !data.header.pk_org) {
@@ -89,20 +89,20 @@ viewModel.get('button31if') && viewModel.get('button31if').on('click', function 
     }
 
     // 3. 显示确认
-    cb.utils.confirm('确定要执行此操作吗？', function () {
+    cb.utils.confirm('确定要执行此操作吗？', () => {
         // 4. 显示 loading
         cb.utils.loadingControl.start({ diworkCode: 'my-operation' });
 
         // 5. 发起 API 调用
-        var domainKey = viewModel.getDomainKey();
-        var proxy = cb.rest.DynamicProxy.create({
+        const domainKey = viewModel.getDomainKey();
+        const proxy = cb.rest.DynamicProxy.create({
             myAction: {
                 url: '/api/asset/myAction?domainKey=' + domainKey,
                 method: 'POST'
             }
         });
 
-        proxy.myAction({ pk_org: data.header.pk_org }, function (err, result) {
+        proxy.myAction({ pk_org: data.header.pk_org }, (err, result) => {
             cb.utils.loadingControl.end({ diworkCode: 'my-operation' });
             if (err) {
                 cb.utils.alert(err.message, 'error');
@@ -118,7 +118,7 @@ viewModel.get('button31if') && viewModel.get('button31if').on('click', function 
 ### 按钮点击打开新单据
 
 ```javascript
-viewModel.get('btnViewDetail') && viewModel.get('btnViewDetail').on('click', function () {
+viewModel.get('btnViewDetail') && viewModel.get('btnViewDetail').on('click', () => {
     window.jDiwork.openService(
         'serviceId',
         { billtype: 'asset_card', billno: '资产卡片' },
@@ -132,8 +132,8 @@ viewModel.get('btnViewDetail') && viewModel.get('btnViewDetail').on('click', fun
 ### 标准回调模式
 
 ```javascript
-var domainKey = viewModel.getDomainKey();
-var proxy = cb.rest.DynamicProxy.create({
+const domainKey = viewModel.getDomainKey();
+const proxy = cb.rest.DynamicProxy.create({
     queryData: {
         url: '/api/asset/query?domainKey=' + domainKey,
         method: 'POST'
@@ -144,7 +144,7 @@ var proxy = cb.rest.DynamicProxy.create({
     }
 });
 
-proxy.queryData(params, function (err, result) {
+proxy.queryData(params, (err, result) => {
     if (err) {
         cb.utils.alert(err.message, 'error');
         return;
@@ -159,7 +159,7 @@ proxy.queryData(params, function (err, result) {
 
 ```javascript
 // 同步调用远程函数（阻塞 UI）
-var result = cb.rest.invokeFunction(
+const result = cb.rest.invokeFunction(
     'functionName',
     { param1: 'value1' },
     null, null,
@@ -173,7 +173,7 @@ var result = cb.rest.invokeFunction(
 cb.rest.invokeFunction(
     'functionName',
     { param1: 'value1' },
-    function (err, result) {
+    (err, result) => {
         if (err) { cb.utils.alert(err.message, 'error'); return; }
         // 处理结果
     },
@@ -187,8 +187,8 @@ cb.rest.invokeFunction(
 ### 字段参照过滤
 
 ```javascript
-viewModel.get('pk_asset').on('beforeBrowse', function (arg) {
-    var condition = {
+viewModel.get('pk_asset').on('beforeBrowse', (arg) => {
+    const condition = {
         isExtend: true,
         simpleVOs: [
             { field: 'pk_org', op: 'eq', value1: orgId },
@@ -202,11 +202,11 @@ viewModel.get('pk_asset').on('beforeBrowse', function (arg) {
 ### 表格参照过滤
 
 ```javascript
-viewModel.getGridModel('bodyvos').on('beforeBrowse', function (arg) {
+viewModel.getGridModel('bodyvos').on('beforeBrowse', (arg) => {
     if (arg.cellName === 'pk_asset') {
-        var rowIndex = arg.rowIndex;
-        var orgId = viewModel.get('pk_org').getValue();
-        var condition = {
+        const rowIndex = arg.rowIndex;
+        const orgId = viewModel.get('pk_org').getValue();
+        const condition = {
             isExtend: true,
             simpleVOs: [{ field: 'pk_org', op: 'eq', value1: orgId }]
         };
@@ -218,8 +218,8 @@ viewModel.getGridModel('bodyvos').on('beforeBrowse', function (arg) {
 ### 树形参照过滤
 
 ```javascript
-field.on('beforeBrowse', function (arg) {
-    var condition = {
+field.on('beforeBrowse', (arg) => {
+    const condition = {
         isExtend: true,
         simpleVOs: [{ field: 'pk_group', op: 'eq', value1: groupId }]
     };
@@ -232,11 +232,11 @@ field.on('beforeBrowse', function (arg) {
 ### 新增行并设置初始值
 
 ```javascript
-viewModel.get('btnAddRow') && viewModel.get('btnAddRow').on('click', function () {
-    var grid = viewModel.getGridModel('bodyvos');
+viewModel.get('btnAddRow') && viewModel.get('btnAddRow').on('click', () => {
+    const grid = viewModel.getGridModel('bodyvos');
     if (!grid) return;
 
-    var newRow = {
+    const newRow = {
         row_id: generateId(),
         pk_org: viewModel.get('pk_org').getValue(),
         pk_org_name: viewModel.get('pk_org_name').getValue(),
@@ -251,14 +251,14 @@ viewModel.get('btnAddRow') && viewModel.get('btnAddRow').on('click', function ()
 ### 批量更新行
 
 ```javascript
-var grid = viewModel.getGridModel('bodyvos');
-var indexes = grid.getSelectedRowIndexes();
+const grid = viewModel.getGridModel('bodyvos');
+const indexes = grid.getSelectedRowIndexes();
 if (!indexes || indexes.length === 0) {
     cb.utils.alert('请先选择要操作的行', 'warning');
     return;
 }
 
-var rows = indexes.map(function (idx) {
+const rows = indexes.map((idx) => {
     return { inventory_flag: true };
 });
 grid.updateRows(indexes, rows);
@@ -267,15 +267,15 @@ grid.updateRows(indexes, rows);
 ### 删除选中行
 
 ```javascript
-viewModel.get('btnDelete') && viewModel.get('btnDelete').on('click', function () {
-    var grid = viewModel.getGridModel('bodyvos');
-    var indexes = grid.getSelectedRowIndexes();
+viewModel.get('btnDelete') && viewModel.get('btnDelete').on('click', () => {
+    const grid = viewModel.getGridModel('bodyvos');
+    const indexes = grid.getSelectedRowIndexes();
     if (!indexes || indexes.length === 0) {
         cb.utils.alert('请先选择要删除的行', 'warning');
         return;
     }
 
-    cb.utils.confirm('确定删除选中的 ' + indexes.length + ' 行？', function () {
+    cb.utils.confirm('确定删除选中的 ' + indexes.length + ' 行？', () => {
         // 注意：MDF 没有直接删除行的 API
         // 通常通过标记删除状态或在保存前过滤实现
         grid.clear(); // 清空后重建
@@ -288,14 +288,14 @@ viewModel.get('btnDelete') && viewModel.get('btnDelete').on('click', function ()
 ### 保存前校验
 
 ```javascript
-viewModel.on('beforeValidate', function () {
-    var data = viewModel.getAllData();
-    var bodyvos = data.bodyvos || [];
-    var errorMsgs = [];
+viewModel.on('beforeValidate', () => {
+    const data = viewModel.getAllData();
+    const bodyvos = data.bodyvos || [];
+    const errorMsgs = [];
 
-    for (var i = 0; i < bodyvos.length; i++) {
-        var row = bodyvos[i];
-        var rowNum = i + 1;
+    for (let i = 0; i < bodyvos.length; i++) {
+        const row = bodyvos[i];
+        const rowNum = i + 1;
 
         if (!row.pk_asset) {
             errorMsgs.push('第 ' + rowNum + ' 行缺少资产');
@@ -317,12 +317,12 @@ viewModel.on('beforeValidate', function () {
 
 ```javascript
 function checkAllCriticalParts(bodyvos) {
-    var errorMsgs = [];
-    for (var i = 0; i < bodyvos.length; i++) {
-        var row = bodyvos[i];
+    const errorMsgs = [];
+    for (let i = 0; i < bodyvos.length; i++) {
+        const row = bodyvos[i];
         if (row.important_composition_list && row.important_composition_list.length > 0) {
-            var parts = row.important_composition_list;
-            for (var j = 0; j < parts.length; j++) {
+            const parts = row.important_composition_list;
+            for (let j = 0; j < parts.length; j++) {
                 if (!parts[j].pk_asset || !parts[j].pk_asset_name) {
                     errorMsgs.push('第 ' + (i + 1) + ' 行重要组成缺少资产编码');
                 }
@@ -332,9 +332,9 @@ function checkAllCriticalParts(bodyvos) {
     return errorMsgs;
 }
 
-viewModel.on('beforeValidate', function () {
-    var data = viewModel.getAllData();
-    var errorMsgs = checkAllCriticalParts(data.bodyvos || []);
+viewModel.on('beforeValidate', () => {
+    const data = viewModel.getAllData();
+    const errorMsgs = checkAllCriticalParts(data.bodyvos || []);
     if (errorMsgs.length > 0) {
         cb.utils.alert(errorMsgs.join('\n'), 'error');
         return false;
@@ -350,7 +350,7 @@ viewModel.on('beforeValidate', function () {
 cb.utils.loadingControl.start({ diworkCode: 'my-operation' });
 
 // 发起异步操作
-proxy.myAction(params, function (err, result) {
+proxy.myAction(params, (err, result) => {
     // 结束 loading（确保在回调中执行，无论成功或失败）
     cb.utils.loadingControl.end({ diworkCode: 'my-operation' });
 
@@ -368,10 +368,10 @@ proxy.myAction(params, function (err, result) {
 ```javascript
 cb.utils.confirm(
     '确定要执行此操作吗？',  // 消息
-    function () {            // 确认回调
+    () => {            // 确认回调
         // 执行操作
     },
-    function () {            // 取消回调（可选）
+    () => {            // 取消回调（可选）
         // 取消操作
     },
     '确认标题',              // 标题（可选）
@@ -384,13 +384,13 @@ cb.utils.confirm(
 常用于必填字段表头标红等场景：
 
 ```javascript
-viewModel.on('customInit', function () {
-    var cusStyle =
+viewModel.on('customInit', () => {
+    const cusStyle =
         '.meta-table .public_fixedDataTableCell_wrap3 .fixedDataTableRowLayout_rowWrapper > div:nth-child(13) > div > span,' +
         '.meta-table .public_fixedDataTableLayout_fixedDataTableDivider > div:nth-child(13) > span {' +
         '    color: rgb(223, 17, 34) !important;' +
         '}';
-    var style = document.createElement('style');
+    const style = document.createElement('style');
     style.sheet && style.sheet.insertRule(cusStyle, 0);
     document.head.appendChild(style);
 });
@@ -399,7 +399,7 @@ viewModel.on('customInit', function () {
 ## 特性启用
 
 ```javascript
-viewModel.on('customInit', function () {
+viewModel.on('customInit', () => {
     // 分页懒加载
     viewModel.enableFeature('lazyLoadByPage');
     // 异步保存
@@ -412,8 +412,8 @@ viewModel.on('customInit', function () {
 ## 环境注册（推单行为控制）
 
 ```javascript
-viewModel.on('customInit', function () {
-    var domainKey = viewModel.getDomainKey();
+viewModel.on('customInit', () => {
+    const domainKey = viewModel.getDomainKey();
     cb.extend.registerEnv(domainKey, {
         pullVoucherCarryDetail: true,   // 拉单携带明细
         createCodeCarryDetail: true     // 生单携带编码明细
@@ -425,17 +425,17 @@ viewModel.on('customInit', function () {
 
 ```javascript
 function downloadTemplate(templateId, fileName) {
-    var url = '/api/template/download/' + templateId;
+    const url = '/api/template/download/' + templateId;
     fetch(url)
-        .then(function (res) { return res.blob(); })
-        .then(function (blob) {
-            var link = document.createElement('a');
+        .then((res) => res.blob())
+        .then((blob) => {
+            const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = fileName;
             link.click();
             URL.revokeObjectURL(link.href);
         })
-        .catch(function (err) {
+        .catch((err) => {
             cb.utils.alert('下载失败: ' + err.message, 'error');
         });
 }
@@ -444,13 +444,13 @@ function downloadTemplate(templateId, fileName) {
 ## 批改弹窗字段过滤
 
 ```javascript
-viewModel.on('batchModifySetFields', function (data) {
+viewModel.on('batchModifySetFields', (data) => {
     // 只允许批改指定字段
-    var allowedFields = [
+    const allowedFields = [
         'pk_asset__name', 'equip_code', 'inventory_flag',
         'inventory_verfiresult', 'inventory_result'
     ];
-    data.setFields = data.setFields.filter(function (field) {
+    data.setFields = data.setFields.filter((field) => {
         return allowedFields.indexOf(field.key) !== -1;
     });
 });
@@ -459,8 +459,8 @@ viewModel.on('batchModifySetFields', function (data) {
 ## 分页设置
 
 ```javascript
-viewModel.on('afterLoadData', function () {
-    var grid = viewModel.getGridModel('bodyvos');
+viewModel.on('afterLoadData', () => {
+    const grid = viewModel.getGridModel('bodyvos');
     if (grid) {
         grid.setPageSize(1000);
         grid.setPageInfo({

@@ -84,19 +84,19 @@ field.setReadOnly(bool)              // 设置只读
 ### 字段事件
 
 ```javascript
-field.on('beforeValueChange', function(data) {
+field.on('beforeValueChange', (data) => {
     // 返回 false 可阻止值变更
 })
-field.on('afterValueChange', function(data) {
+field.on('afterValueChange', (data) => {
     // data.value - 新值
     // data.oldValue - 旧值
 })
-field.on('valueChange', function(data) {})
-field.on('blur', function(data) {})
-field.on('beforeBrowse', function(arg) {
+field.on('valueChange', (data) => {})
+field.on('blur', (data) => {})
+field.on('beforeBrowse', (arg) => {
     // 参照浏览前过滤，通过 arg.context.setFilter() 或 setTreeFilter()
 })
-field.on('beforeReferOkClick', function(data) {
+field.on('beforeReferOkClick', (data) => {
     // 返回 false 可阻止参照确认
 })
 ```
@@ -104,8 +104,8 @@ field.on('beforeReferOkClick', function(data) {
 ### 参照字段过滤示例
 
 ```javascript
-field.on('beforeBrowse', function (arg) {
-    var condition = {
+field.on('beforeBrowse', (arg) => {
+    const condition = {
         isExtend: true,
         simpleVOs: [{ field: 'fieldName', op: 'eq', value1: someValue }]
     };
@@ -177,24 +177,24 @@ gridModel.setDisabled(bool)              // 启用/禁用整个表格
 ### 表格事件
 
 ```javascript
-gridModel.on('afterCellValueChange', function(data) {
+gridModel.on('afterCellValueChange', (data) => {
     // data.rowIndex, data.cellName, data.value
     // data.indexs 用于批量操作场景
 })
-gridModel.on('beforeCellValueChange', function(data) {
+gridModel.on('beforeCellValueChange', (data) => {
     // 返回 false 可阻止单元格值变更
 })
-gridModel.on('beforeInsertRow', function(args) {
+gridModel.on('beforeInsertRow', (args) => {
     // 可在行插入前修改 incoming row，args.isCopy 判断是否复制操作
 })
-gridModel.on('afterInsertRow', function(args) {})
-gridModel.on('beforeBrowse', function(arg) {
+gridModel.on('afterInsertRow', (args) => {})
+gridModel.on('beforeBrowse', (arg) => {
     // arg.cellName - 触发参照的列名
     // arg.context.setFilter() / setTreeFilter()
 })
-gridModel.on('beforeCellJointQuery', function(arg) {})
-gridModel.on('afterSetDataSource', function(data) {})
-gridModel.on('beforeSetActionsState', function(data) {
+gridModel.on('beforeCellJointQuery', (arg) => {})
+gridModel.on('afterSetDataSource', (data) => {})
+gridModel.on('beforeSetActionsState', (data) => {
     // 控制行操作按钮显隐
 })
 ```
@@ -202,7 +202,7 @@ gridModel.on('beforeSetActionsState', function(data) {
 ### 编辑行弹窗
 
 ```javascript
-var editModal = gridModel.getEditRowModel();
+const editModal = gridModel.getEditRowModel();
 // 用于行编辑弹窗的自定义 DOM 操作
 // 监听 tableEditRowModalDidMount 事件
 ```
@@ -214,7 +214,7 @@ var editModal = gridModel.getEditRowModel();
 ### DynamicProxy（代理调用）
 
 ```javascript
-var proxy = cb.rest.DynamicProxy.create({
+const proxy = cb.rest.DynamicProxy.create({
     actionName: {
         url: '/api/path?domainKey=xxx',
         method: 'POST',    // GET | POST | PUT | DELETE
@@ -225,7 +225,7 @@ var proxy = cb.rest.DynamicProxy.create({
 });
 
 // 回调风格
-proxy.actionName(params, function(err, result) {
+proxy.actionName(params, (err, result) => {
     if (err) { cb.utils.alert(err.message, 'error'); return; }
     // 处理 result
 });
@@ -235,10 +235,10 @@ proxy.actionName(params, function(err, result) {
 
 ```javascript
 // 同步调用
-var result = cb.rest.invokeFunction('functionName', params, null, null, { async: false });
+const result = cb.rest.invokeFunction('functionName', params, null, null, { async: false });
 
 // 回调风格
-cb.rest.invokeFunction('functionName', params, function(err, result) {
+cb.rest.invokeFunction('functionName', params, (err, result) => {
     if (err) { cb.utils.alert(err.message, 'error'); return; }
     // 处理 result
 }, viewModel, { async: false });

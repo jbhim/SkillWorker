@@ -96,8 +96,8 @@ grid.getRows() / grid.getRow(index) / grid.updateRow(index, obj)
 grid.setCellValue(index, key, value) / grid.setCellState(index, key, 'disabled', true)
 
 // API 调用
-var proxy = cb.rest.DynamicProxy.create({ action: { url: '/api/path?domainKey=' + domainKey, method: 'POST' } });
-proxy.action(params, function(err, result) { ... });
+const proxy = cb.rest.DynamicProxy.create({ action: { url: '/api/path?domainKey=' + domainKey, method: 'POST' } });
+proxy.action(params, (err, result) => { ... });
 
 // 弹窗
 cb.utils.alert('消息', 'error' | 'success' | 'warning' | 'info')
@@ -133,6 +133,15 @@ MDF 官方文档位于内网: [https://bip-pre.yonyoucloud.com/iuap-yonbuilder-d
 - **表格名**: `module_table_bList`（主表），`_sList`（子表），`_gsList`（孙表），或 `bodyvos`（默认）
 - **按钮 ID**: 自动生成（`button31if`）或语义化（`btnSave`, `btnEdit`）
 
+## 代码规范
+
+**禁止使用 `var`**: 统一使用 `const`（首选）和 `let`（仅当变量需要重新赋值时）。所有示例代码、生成代码必须遵守此规范。
+
+**优先使用现代 JS 语法**:
+- 箭头函数: `() => {}` 替代 `function() {}`
+- 模板字符串: `` `text ${var}` `` 替代字符串拼接
+- 对象方法简写: `{ foo() {} }` 替代 `{ foo: function() {} }`
+
 ## 注意事项
 
 1. **始终使用空值守卫**注册事件: `viewModel.get('xxx') && viewModel.get('xxx').on(...)`
@@ -140,4 +149,3 @@ MDF 官方文档位于内网: [https://bip-pre.yonyoucloud.com/iuap-yonbuilder-d
 3. **同步调用**（`{async: false}`）会阻塞 UI，仅在必要时使用
 4. **所有 API URL 必须携带 `domainKey` 参数**
 5. **脚本无模块化**，所有代码在顶层执行，无 import/export
-6. **主单/子单/孙单脚本分别注册**，互不干扰

@@ -8,7 +8,7 @@
 
 ```javascript
 // 初始化隐藏按钮
-viewModel.on('customInit', function () {
+viewModel.on('customInit', () => {
     viewModel.get('button31if') && viewModel.get('button31if').setVisible(false);
 });
 ```
@@ -21,9 +21,9 @@ viewModel.on('customInit', function () {
 
 ```javascript
 // 组织变化后联动更新下属单位
-viewModel.on('customInit', function () {
-    viewModel.get('pk_org').on('afterValueChange', function (data) {
-        var orgId = data.value;
+viewModel.on('customInit', () => {
+    viewModel.get('pk_org').on('afterValueChange', (data) => {
+        const orgId = data.value;
         if (!orgId) {
             viewModel.get('pk_unit').setValue('');
             viewModel.get('pk_unit_name').setValue('');
@@ -31,7 +31,7 @@ viewModel.on('customInit', function () {
         }
 
         // 同步查询并填充
-        var result = cb.rest.invokeFunction(
+        const result = cb.rest.invokeFunction(
             'querySubUnits',
             { pk_org: orgId },
             null, null,
@@ -53,36 +53,36 @@ viewModel.on('customInit', function () {
 单元格值变化后联动更新并校验。
 
 ```javascript
-viewModel.on('customInit', function () {
+viewModel.on('customInit', () => {
     viewModel.enableFeature('asyncSave');
 });
 
-viewModel.on('afterLoadData', function () {
-    var grid = viewModel.getGridModel('bodyvos');
+viewModel.on('afterLoadData', () => {
+    const grid = viewModel.getGridModel('bodyvos');
     if (!grid) return;
 
     // 设置某些列只读
     grid.setColumnState('equip_code', 'disabled', true);
 });
 
-viewModel.getGridModel('bodyvos').on('afterCellValueChange', function (data) {
-    var grid = viewModel.getGridModel('bodyvos');
-    var rowIndex = data.rowIndex;
+viewModel.getGridModel('bodyvos').on('afterCellValueChange', (data) => {
+    const grid = viewModel.getGridModel('bodyvos');
+    const rowIndex = data.rowIndex;
 
     // 盘到标识联动
     if (data.cellName === 'inventory_flag') {
-        var isFound = data.value;
+        const isFound = data.value;
         grid.setCellValue(rowIndex, 'inventory_verfiresult', isFound ? '1' : '');
         grid.setCellValue(rowIndex, 'inventory_result', isFound ? '1' : '2');
     }
 });
 
-viewModel.on('beforeValidate', function () {
-    var grid = viewModel.getGridModel('bodyvos');
+viewModel.on('beforeValidate', () => {
+    const grid = viewModel.getGridModel('bodyvos');
     if (!grid) return true;
-    var rows = grid.getRows();
+    const rows = grid.getRows();
 
-    for (var i = 0; i < rows.length; i++) {
+    for (let i = 0; i < rows.length; i++) {
         if (!rows[i].equip_code) {
             cb.utils.alert('第 ' + (i + 1) + ' 行缺少装备编码', 'error');
             return false;
@@ -91,8 +91,8 @@ viewModel.on('beforeValidate', function () {
     return true;
 });
 
-viewModel.on('batchModifySetFields', function (data) {
-    data.setFields = data.setFields.filter(function (field) {
+viewModel.on('batchModifySetFields', (data) => {
+    data.setFields = data.setFields.filter((field) => {
         return field.key === 'inventory_flag'
             || field.key === 'inventory_verfiresult';
     });
@@ -106,10 +106,10 @@ viewModel.on('batchModifySetFields', function (data) {
 完整的参照过滤、按钮点击、API 调用、刷新流程。
 
 ```javascript
-viewModel.on('customInit', function () {
+viewModel.on('customInit', () => {
     // 参照过滤：资产只能选择当前组织的
-    viewModel.get('pk_asset').on('beforeBrowse', function (arg) {
-        var orgId = viewModel.get('pk_org').getValue();
+    viewModel.get('pk_asset').on('beforeBrowse', (arg) => {
+        const orgId = viewModel.get('pk_org').getValue();
         if (!orgId) return;
 
         arg.context.setFilter({
@@ -123,31 +123,31 @@ viewModel.on('customInit', function () {
 });
 
 // 自定义按钮：同步资产
-viewModel.get('btnSync') && viewModel.get('btnSync').on('click', function () {
-    var pk_org = viewModel.get('pk_org').getValue();
+viewModel.get('btnSync') && viewModel.get('btnSync').on('click', () => {
+    const pk_org = viewModel.get('pk_org').getValue();
     if (!pk_org) {
         cb.utils.alert('请先选择组织', 'error');
         return;
     }
 
-    cb.utils.confirm('确定要同步资产数据吗？', function () {
+    cb.utils.confirm('确定要同步资产数据吗？', () => {
         cb.utils.loadingControl.start({ diworkCode: 'sync-assets' });
 
-        var domainKey = viewModel.getDomainKey();
-        var proxy = cb.rest.DynamicProxy.create({
+        const domainKey = viewModel.getDomainKey();
+        const proxy = cb.rest.DynamicProxy.create({
             syncAssets: {
                 url: '/api/asset/sync?domainKey=' + domainKey,
                 method: 'POST'
             }
         });
 
-        proxy.syncAssets({ pk_org: pk_org }, function (err, result) {
+        proxy.syncAssets({ pk_org: pk_org }, (err, result) => {
             cb.utils.loadingControl.end({ diworkCode: 'sync-assets' });
             if (err) {
                 cb.utils.alert('同步失败: ' + err.message, 'error');
                 return;
             }
-            var count = result.count || 0;
+            const count = result.count || 0;
             cb.utils.alert('成功同步 ' + count + ' 条资产数据', 'success');
             viewModel.execute('refresh');
         });
@@ -162,14 +162,14 @@ viewModel.get('btnSync') && viewModel.get('btnSync').on('click', function () {
 包含特性启用、分页、表格操作、before/after 对比、批改等完整功能。
 
 ```javascript
-viewModel.on('customInit', function () {
+viewModel.on('customInit', () => {
     viewModel.enableFeature('lazyLoadByPage');
     viewModel.enableFeature('asyncSave');
     viewModel.enableFeature('filteringCrossPage');
 });
 
-viewModel.on('afterLoadData', function () {
-    var grid = viewModel.getGridModel('bodyvos');
+viewModel.on('afterLoadData', () => {
+    const grid = viewModel.getGridModel('bodyvos');
     if (!grid) return;
 
     // 设置分页
@@ -183,23 +183,23 @@ viewModel.on('afterLoadData', function () {
     });
 
     // 获取所有 after 字段并设置为可编辑
-    var columns = grid.getColumns();
-    var afterKeys = columns.filter(function (col) {
+    const columns = grid.getColumns();
+    const afterKeys = columns.filter((col) => {
         return col.key && col.key.endsWith('_after');
-    }).map(function (col) { return col.key; });
+    }).map((col) => col.key);
 
-    afterKeys.forEach(function (key) {
+    afterKeys.forEach((key) => {
         grid.setColumnState(key, 'bCanModify', true);
     });
 });
 
 // 单元格值变化联动
-viewModel.getGridModel('bodyvos').on('afterCellValueChange', function (data) {
-    var grid = viewModel.getGridModel('bodyvos');
-    var rowIndex = data.rowIndex;
+viewModel.getGridModel('bodyvos').on('afterCellValueChange', (data) => {
+    const grid = viewModel.getGridModel('bodyvos');
+    const rowIndex = data.rowIndex;
 
     if (data.cellName === 'inventory_flag') {
-        var isFound = normalizeIfBoolean(data.value);
+        const isFound = normalizeIfBoolean(data.value);
 
         if (isFound === true) {
             grid.setCellValue(rowIndex, 'inventory_verfiresult', '1');
@@ -213,18 +213,18 @@ viewModel.getGridModel('bodyvos').on('afterCellValueChange', function (data) {
 
     // after 字段变化时对比 before
     if (data.cellName.endsWith('_after')) {
-        var row = grid.getRow(rowIndex);
-        var beforeKey = data.cellName.replace('_after', '_before');
-        var beforeVal = row[beforeKey];
-        var afterVal = data.value;
+        const row = grid.getRow(rowIndex);
+        const beforeKey = data.cellName.replace('_after', '_before');
+        const beforeVal = row[beforeKey];
+        const afterVal = data.value;
 
         // 计算差异
-        var diffs = [];
-        var allBeforeKeys = Object.keys(row).filter(function (k) {
+        const diffs = [];
+        const allBeforeKeys = Object.keys(row).filter((k) => {
             return k.endsWith('_before');
         });
-        allBeforeKeys.forEach(function (bk) {
-            var ak = bk.replace('_before', '_after');
+        allBeforeKeys.forEach((bk) => {
+            const ak = bk.replace('_before', '_after');
             if (row[bk] !== row[ak]) {
                 diffs.push(bk.replace('_before', ''));
             }
@@ -232,9 +232,9 @@ viewModel.getGridModel('bodyvos').on('afterCellValueChange', function (data) {
         grid.setCellValue(rowIndex, 'DiffDetails', diffs.join(', '));
 
         // 计算盘点结果
-        var allMatch = true;
-        allBeforeKeys.forEach(function (bk) {
-            var ak = bk.replace('_before', '_after');
+        let allMatch = true;
+        allBeforeKeys.forEach((bk) => {
+            const ak = bk.replace('_before', '_after');
             if (row[bk] !== row[ak]) { allMatch = false; }
         });
 
@@ -249,23 +249,23 @@ viewModel.getGridModel('bodyvos').on('afterCellValueChange', function (data) {
 });
 
 // 批改字段过滤
-viewModel.on('batchModifySetFields', function (data) {
-    var allowed = [
+viewModel.on('batchModifySetFields', (data) => {
+    const allowed = [
         'pk_asset__name', 'equip_code', 'inventory_flag',
         'inventory_verfiresult', 'inventory_result'
     ];
-    data.setFields = data.setFields.filter(function (f) {
+    data.setFields = data.setFields.filter((f) => {
         return allowed.indexOf(f.key) !== -1;
     });
 });
 
 // 保存前校验
-viewModel.on('beforeValidate', function () {
-    var grid = viewModel.getGridModel('bodyvos');
+viewModel.on('beforeValidate', () => {
+    const grid = viewModel.getGridModel('bodyvos');
     if (!grid) return true;
-    var rows = grid.getRows();
+    const rows = grid.getRows();
 
-    for (var i = 0; i < rows.length; i++) {
+    for (let i = 0; i < rows.length; i++) {
         if (!rows[i].equip_code) {
             cb.utils.alert('第 ' + (i + 1) + ' 行缺少装备编码', 'error');
             return false;
@@ -290,52 +290,52 @@ function normalizeIfBoolean(value) {
 复杂脚本，包含特性启用、分页、beforePush 校验、反馈 API、自定义 CSS 等。
 
 ```javascript
-viewModel.on('customInit', function () {
+viewModel.on('customInit', () => {
     // 启用特性
     viewModel.enableFeature('lazyLoadByPage');
     viewModel.enableFeature('asyncSave');
     viewModel.enableFeature('filteringCrossPage');
 
     // 注册环境（推单行为控制）
-    var domainKey = viewModel.getDomainKey();
+    const domainKey = viewModel.getDomainKey();
     cb.extend.registerEnv(domainKey, {
         pullVoucherCarryDetail: true,
         createCodeCarryDetail: true
     });
 
     // 自定义 CSS（必填字段表头标红）
-    var cusStyle =
+    const cusStyle =
         '.meta-table .public_fixedDataTableCell_wrap3 .fixedDataTableRowLayout_rowWrapper > div:nth-child(13) > div > span,' +
         '.meta-table .public_fixedDataTableLayout_fixedDataTableDivider > div:nth-child(13) > span {' +
         '    color: rgb(223, 17, 34) !important;' +
         '}';
-    var style = document.createElement('style');
+    const style = document.createElement('style');
     style.sheet && style.sheet.insertRule(cusStyle, 0);
     document.head.appendChild(style);
 
     // 初始化分页
-    var grid = viewModel.getGridModel('bodyvos');
+    const grid = viewModel.getGridModel('bodyvos');
     if (grid) {
         grid.setPageSize(1000);
     }
 });
 
-viewModel.on('afterLoadData', function () {
+viewModel.on('afterLoadData', () => {
     // 根据事务类型控制按钮
-    var transType = viewModel.get('transType').getValue();
+    const transType = viewModel.get('transType').getValue();
     if (transType === '4A35-01-02') {
         viewModel.get('button31if') && viewModel.get('button31if').setVisible(false);
     }
 });
 
 // 单元格值变化联动
-viewModel.getGridModel('bodyvos').on('afterCellValueChange', function (data) {
-    var grid = viewModel.getGridModel('bodyvos');
+viewModel.getGridModel('bodyvos').on('afterCellValueChange', (data) => {
+    const grid = viewModel.getGridModel('bodyvos');
     if (!grid) return;
 
     if (data.cellName === 'is_confirmed') {
-        var rowIndex = data.rowIndex;
-        var confirmed = data.value;
+        const rowIndex = data.rowIndex;
+        const confirmed = data.value;
 
         grid.setCellValue(rowIndex, 'confirm_time', getDate());
         grid.setCellState(rowIndex, 'confirm_remark', 'disabled', !confirmed);
@@ -343,12 +343,12 @@ viewModel.getGridModel('bodyvos').on('afterCellValueChange', function (data) {
 });
 
 // beforePush 校验
-viewModel.on('beforePush', function () {
-    var grid = viewModel.getGridModel('bodyvos');
+viewModel.on('beforePush', () => {
+    const grid = viewModel.getGridModel('bodyvos');
     if (!grid) return true;
-    var rows = grid.getRows();
+    const rows = grid.getRows();
 
-    for (var i = 0; i < rows.length; i++) {
+    for (let i = 0; i < rows.length; i++) {
         if (!rows[i].pk_maintenance_unit || !rows[i].pk_maintenance_unit_name) {
             cb.utils.alert('第 ' + (i + 1) + ' 行缺少维保单位', 'error');
             return false;
@@ -362,22 +362,22 @@ viewModel.on('beforePush', function () {
 });
 
 // 反馈按钮
-viewModel.get('btnFeedback') && viewModel.get('btnFeedback').on('click', function () {
-    var grid = viewModel.getGridModel('bodyvos');
+viewModel.get('btnFeedback') && viewModel.get('btnFeedback').on('click', () => {
+    const grid = viewModel.getGridModel('bodyvos');
     if (!grid) return;
 
-    cb.utils.confirm('确定要反馈到京投系统？', function () {
+    cb.utils.confirm('确定要反馈到京投系统？', () => {
         cb.utils.loadingControl.start({ diworkCode: 'feedback-jt' });
 
-        var domainKey = viewModel.getDomainKey();
-        var proxy = cb.rest.DynamicProxy.create({
+        const domainKey = viewModel.getDomainKey();
+        const proxy = cb.rest.DynamicProxy.create({
             mainToJtFeedbackReturn: {
                 url: '/api/asset/mainToJtFeedbackReturn?domainKey=' + domainKey,
                 method: 'POST'
             }
         });
 
-        proxy.mainToJtFeedbackReturn({}, function (err, result) {
+        proxy.mainToJtFeedbackReturn({}, (err, result) => {
             cb.utils.loadingControl.end({ diworkCode: 'feedback-jt' });
             if (err) {
                 cb.utils.alert('反馈失败: ' + err.message, 'error');
@@ -390,8 +390,8 @@ viewModel.get('btnFeedback') && viewModel.get('btnFeedback').on('click', functio
 });
 
 // 批改字段过滤
-viewModel.on('batchModifySetFields', function (data) {
-    data.setFields = data.setFields.filter(function (field) {
+viewModel.on('batchModifySetFields', (data) => {
+    data.setFields = data.setFields.filter((field) => {
         return field.key === 'pk_maintenance_unit__name'
             || field.key === 'pk_profession__name'
             || field.key === 'is_confirmed';
@@ -400,8 +400,8 @@ viewModel.on('batchModifySetFields', function (data) {
 
 // 获取北京时间日期
 function getDate() {
-    var date = new Date();
-    var utc8Date = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+    const date = new Date();
+    const utc8Date = new Date(date.getTime() + 8 * 60 * 60 * 1000);
     return utc8Date.toISOString().split('T')[0];
 }
 ```
@@ -413,30 +413,30 @@ function getDate() {
 列表页脚本，添加自定义按钮并处理批量操作。
 
 ```javascript
-viewModel.on('customInit', function () {
+viewModel.on('customInit', () => {
     // 列表页初始化
 });
 
 // 批量分配按钮
-viewModel.get('btnAssign') && viewModel.get('btnAssign').on('click', function () {
-    var grid = viewModel.getGridModel();
-    var indexes = grid.getSelectedRowIndexes();
+viewModel.get('btnAssign') && viewModel.get('btnAssign').on('click', () => {
+    const grid = viewModel.getGridModel();
+    const indexes = grid.getSelectedRowIndexes();
 
     if (!indexes || indexes.length === 0) {
         cb.utils.alert('请先选择要分配的任务', 'warning');
         return;
     }
 
-    cb.utils.confirm('确定将选中的 ' + indexes.length + ' 个任务分配给当前用户？', function () {
-        var domainKey = viewModel.getDomainKey();
-        var proxy = cb.rest.DynamicProxy.create({
+    cb.utils.confirm('确定将选中的 ' + indexes.length + ' 个任务分配给当前用户？', () => {
+        const domainKey = viewModel.getDomainKey();
+        const proxy = cb.rest.DynamicProxy.create({
             assignTask: {
                 url: '/api/task/assign?domainKey=' + domainKey,
                 method: 'POST'
             }
         });
 
-        proxy.assignTask({ ids: indexes }, function (err, result) {
+        proxy.assignTask({ ids: indexes }, (err, result) => {
             if (err) {
                 cb.utils.alert(err.message, 'error');
                 return;
@@ -448,25 +448,25 @@ viewModel.get('btnAssign') && viewModel.get('btnAssign').on('click', function ()
 });
 
 // 批量发布按钮
-viewModel.get('btnPublish') && viewModel.get('btnPublish').on('click', function () {
-    var grid = viewModel.getGridModel();
-    var indexes = grid.getSelectedRowIndexes();
+viewModel.get('btnPublish') && viewModel.get('btnPublish').on('click', () => {
+    const grid = viewModel.getGridModel();
+    const indexes = grid.getSelectedRowIndexes();
 
     if (!indexes || indexes.length === 0) {
         cb.utils.alert('请先选择要发布的盘点计划', 'warning');
         return;
     }
 
-    cb.utils.confirm('确定发布选中的盘点计划？', function () {
-        var domainKey = viewModel.getDomainKey();
-        var proxy = cb.rest.DynamicProxy.create({
+    cb.utils.confirm('确定发布选中的盘点计划？', () => {
+        const domainKey = viewModel.getDomainKey();
+        const proxy = cb.rest.DynamicProxy.create({
             publishPlan: {
                 url: '/api/plan/publish?domainKey=' + domainKey,
                 method: 'POST'
             }
         });
 
-        proxy.publishPlan({ ids: indexes }, function (err, result) {
+        proxy.publishPlan({ ids: indexes }, (err, result) => {
             if (err) {
                 cb.utils.alert(err.message, 'error');
                 return;
@@ -485,7 +485,7 @@ viewModel.get('btnPublish') && viewModel.get('btnPublish').on('click', function 
 复杂清册单脚本，包含多 tab 数据联动、实物编码查询、保存前校验。
 
 ```javascript
-viewModel.on('customInit', function () {
+viewModel.on('customInit', () => {
     // 启用特性
     viewModel.enableFeature('asyncSave');
 
@@ -493,25 +493,25 @@ viewModel.on('customInit', function () {
     viewModel.clear();
 
     // Excel 模板下载按钮
-    viewModel.get('btnDownloadTemplate') && viewModel.get('btnDownloadTemplate').on('click', function () {
+    viewModel.get('btnDownloadTemplate') && viewModel.get('btnDownloadTemplate').on('click', () => {
         downloadTemplate('asset_template', '资产清册模板.xlsx');
     });
 });
 
 // 项目选择联动
-viewModel.get('pk_project').on('afterValueChange', function (data) {
-    var projectId = data.value;
+viewModel.get('pk_project').on('afterValueChange', (data) => {
+    const projectId = data.value;
     if (!projectId) return;
 
-    var domainKey = viewModel.getDomainKey();
-    var proxy = cb.rest.DynamicProxy.create({
+    const domainKey = viewModel.getDomainKey();
+    const proxy = cb.rest.DynamicProxy.create({
         queryProjectDetail: {
             url: '/api/project/detail?domainKey=' + domainKey + '&pk_project=' + projectId,
             method: 'GET'
         }
     });
 
-    proxy.queryProjectDetail({}, function (err, result) {
+    proxy.queryProjectDetail({}, (err, result) => {
         if (err) { cb.utils.alert(err.message, 'error'); return; }
         if (result) {
             // 填充表头
@@ -527,13 +527,13 @@ viewModel.get('pk_project').on('afterValueChange', function (data) {
 });
 
 // 实物编码选择联动 - 新增资产 tab
-viewModel.getGridModel('addList').on('afterCellValueChange', function (data) {
+viewModel.getGridModel('addList').on('afterCellValueChange', (data) => {
     if (data.cellName === 'equip_code') {
-        var grid = viewModel.getGridModel('addList');
-        var rowIndex = data.rowIndex;
-        var equipCode = data.value;
+        const grid = viewModel.getGridModel('addList');
+        const rowIndex = data.rowIndex;
+        const equipCode = data.value;
 
-        queryAssetCardByEquipCode(equipCode, function (card) {
+        queryAssetCardByEquipCode(equipCode, (card) => {
             if (card) {
                 grid.updateRow(rowIndex, {
                     pk_asset: card.pk_asset,
@@ -548,20 +548,20 @@ viewModel.getGridModel('addList').on('afterCellValueChange', function (data) {
 });
 
 // 保存前校验 - 父资产关系
-viewModel.on('beforeValidate', function () {
-    var errorMsgs = [];
-    var addRows = viewModel.getGridModel('addList') ? viewModel.getGridModel('addList').getRows() : [];
-    var updateRows = viewModel.getGridModel('updateList') ? viewModel.getGridModel('updateList').getRows() : [];
+viewModel.on('beforeValidate', () => {
+    const errorMsgs = [];
+    const addRows = viewModel.getGridModel('addList') ? viewModel.getGridModel('addList').getRows() : [];
+    const updateRows = viewModel.getGridModel('updateList') ? viewModel.getGridModel('updateList').getRows() : [];
 
-    var checkRows = function (rows, tabName) {
-        for (var i = 0; i < rows.length; i++) {
-            var row = rows[i];
+    const checkRows = (rows, tabName) => {
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
             if (!row.pk_asset) {
                 errorMsgs.push(tabName + ' 第 ' + (i + 1) + ' 行缺少资产');
             }
             if (row.important_composition_list) {
-                var parts = row.important_composition_list;
-                for (var j = 0; j < parts.length; j++) {
+                const parts = row.important_composition_list;
+                for (let j = 0; j < parts.length; j++) {
                     if (!parts[j].pk_asset) {
                         errorMsgs.push(tabName + ' 第 ' + (i + 1) + ' 行重要组成缺少资产');
                     }
@@ -581,8 +581,8 @@ viewModel.on('beforeValidate', function () {
 });
 
 // 批改字段过滤
-viewModel.on('batchModifySetFields', function (data) {
-    data.setFields = data.setFields.filter(function (field) {
+viewModel.on('batchModifySetFields', (data) => {
+    data.setFields = data.setFields.filter((field) => {
         return field.key === 'pk_asset__name'
             || field.key === 'equip_code'
             || field.key === 'userDefines__T0002';
@@ -591,40 +591,40 @@ viewModel.on('batchModifySetFields', function (data) {
 
 // 辅助函数
 function fillSubTable(gridName, items) {
-    var grid = viewModel.getGridModel(gridName);
+    const grid = viewModel.getGridModel(gridName);
     if (!grid) return;
     grid.clear();
-    items.forEach(function (item) {
+    items.forEach((item) => {
         grid.appendRow(item);
     });
 }
 
 function queryAssetCardByEquipCode(equipCode, callback) {
-    var domainKey = viewModel.getDomainKey();
-    var proxy = cb.rest.DynamicProxy.create({
+    const domainKey = viewModel.getDomainKey();
+    const proxy = cb.rest.DynamicProxy.create({
         queryCard: {
             url: '/api/asset/cardByEquip?domainKey=' + domainKey,
             method: 'GET'
         }
     });
-    proxy.queryCard({ equip_code: equipCode }, function (err, result) {
+    proxy.queryCard({ equip_code: equipCode }, (err, result) => {
         if (err || !result) { callback(null); return; }
         callback(result);
     });
 }
 
 function downloadTemplate(templateId, fileName) {
-    var url = '/api/template/download/' + templateId;
+    const url = '/api/template/download/' + templateId;
     fetch(url)
-        .then(function (res) { return res.blob(); })
-        .then(function (blob) {
-            var link = document.createElement('a');
+        .then((res) => res.blob())
+        .then((blob) => {
+            const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = fileName;
             link.click();
             URL.revokeObjectURL(link.href);
         })
-        .catch(function (err) {
+        .catch((err) => {
             cb.utils.alert('下载失败: ' + err.message, 'error');
         });
 }
