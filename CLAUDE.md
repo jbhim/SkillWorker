@@ -4,15 +4,40 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-这是一个专门用于开发 Claude Code Skills 的项目，目前处于起步阶段。
+这是一个个人 Claude Code Skills 仓库，用于管理和开发自定义技能。项目为纯文档型仓库，无构建/测试流程。
 
 ## 目录结构
 
 ```
-skills/                           # 所有 skill 的存放目录
-  <skill-name>/                   # skill 目录（kebab-case命名）
-    ├── SKILL.md                  # 主文档（必需）
-    └── supporting-file.*         # 支持文件（仅在需要时）
+skills/                                  # 所有 skill 的存放目录
+  bailian-coding-plan/                   # 百炼模型切换 Skill
+  configuring-opencode-providers/        # OpenCode 自定义供应商配置指南
+  mdf-script-development/                # 用友 MDF 前端脚本开发 Skill
+    ├── SKILL.md                         # 主入口文档
+    ├── api-reference.md                 # 完整 API 参考
+    ├── lifecycle-events.md              # 生命周期事件详解
+    ├── common-patterns.md               # 常见开发模式
+    ├── business-patterns.md             # 业务场景模式
+    └── examples.md                      # 完整脚本示例
+```
+
+## 常用命令
+
+```bash
+# 查看已安装的 skills
+npx skills list
+
+# 安装本地 skill 到 Claude Code
+npx skills add ./skills/<skill-name>
+
+# 安装整个仓库
+npx skills add ./skills
+
+# 移除 skill
+npx skills remove <skill-name>
+
+# 重新加载 plugins
+npx skills reload
 ```
 
 ## Skill 开发规范
