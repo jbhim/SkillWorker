@@ -1,6 +1,6 @@
 ---
 name: mdf-script-development
-description: Use when developing Yonyou MDF (Model-Driven Framework) frontend client scripts for bills, lists, and forms. Triggers include viewModel event handling, cb.rest API calls, grid/field operations, bill lifecycle hooks (customInit, afterLoadData, beforeValidate, beforePush), reference filtering, inventory/asset business flows, and 用友 diwork 平台客开脚本开发
+description: 用于编写用友 MDF 前端客开脚本时触发，包括 viewModel 事件处理、cb.rest API 调用、表格/字段操作、单据生命周期钩子（customInit、afterLoadData、beforeValidate、beforePush）、参照过滤、资产/盘点业务流、自定义特征字段访问、按钮交互等场景
 ---
 
 # MDF 前端脚本开发
@@ -149,3 +149,4 @@ MDF 官方文档位于内网: [https://bip-pre.yonyoucloud.com/iuap-yonbuilder-d
 3. **同步调用**（`{async: false}`）会阻塞 UI，仅在必要时使用
 4. **所有 API URL 必须携带 `domainKey` 参数**
 5. **脚本无模块化**，所有代码在顶层执行，无 import/export
+6. **事件回调参数签名必须严格有据可依**，不能凭空编造。每个事件的回调函数参数格式由 MDF API 定义，必须与官方文档或已有可靠案例一致。例如 `afterCellValueChange` 的回调参数是 `(data)` 对象，其中包含 `{ rowIndex, cellName, value, oldValue }`，**绝不能写成** `(key, value, rowIndex, rowData)` 等错误签名。不确定时必须查阅文档或现有脚本确认，禁止猜测。

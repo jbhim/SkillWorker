@@ -2,6 +2,37 @@
 
 本文档是 `mdf-script-development` skill 的支持文件，提供 MDF 前端脚本的常见开发模式。
 
+## 事件回调参数签名规范
+
+**所有事件回调的参数格式必须严格按 API 定义，不能凭空编造。** 不确定时必须查阅文档或现有脚本确认。
+
+| 事件 | 回调参数 | 参数结构 |
+|------|---------|---------|
+| `afterCellValueChange` | `(data)` | `{ rowIndex, cellName, value, oldValue }` |
+| `beforeCellValueChange` | `(data)` | `{ rowIndex, cellName, value, oldValue }` |
+| `afterValueChange` (字段) | `(data)` | `{ value, oldValue }` |
+| `beforeValueChange` (字段) | `(data)` | `{ value, oldValue }` |
+| `beforeBrowse` | `(arg)` | `arg.context.setFilter(...)` / `arg.context.setTreeFilter(...)` |
+| `click` (按钮) | `(data)` | 按钮上下文数据 |
+| `customInit` / `afterLoadData` / `beforeValidate` / `beforePush` | `()` | 无参数或空对象 |
+| `batchModifySetFields` | `(data)` | `data.setFields` 可过滤 |
+
+**错误示例（绝对不能这样写）**：
+```javascript
+// ❌ 错误：afterCellValueChange 参数签名完全错误
+inspectInfoGrid.on('afterCellValueChange', (key, value, rowIndex, rowData) => {});
+```
+
+**正确写法**：
+```javascript
+// ✅ 正确：使用 data 对象，从中解构需要的属性
+inspectInfoGrid.on('afterCellValueChange', (data) => {
+    const { cellName, rowIndex, value, oldValue } = data;
+});
+// 或简写为
+inspectInfoGrid.on('afterCellValueChange', ({ cellName, rowIndex }) => {});
+```
+
 ## 表格单元格值变更联动
 
 最常用模式：当某个单元格值改变时，联动更新同其他单元格或触发 API 调用。
@@ -154,6 +185,33 @@ proxy.queryData(params, (err, result) => {
     }
 });
 ```
+
+### 带项目路径的绝对 URL 模式
+
+当 API 接口需要带上完整的项目上下文路径时（如客开项目 `/c-po-dev-lihuab`），使用 `window.location.origin` 拼接绝对路径：
+
+```javascript
+const proxy = cb.rest.DynamicProxy.create({
+    calcDeduction: {
+        url: window.location.origin + '/c-po-dev-lihuab/api/pu_arrivalorder/calcDeduction',
+        method: 'POST'
+    }
+});
+
+proxy.calcDeduction(billData, (err, result) => {
+    cb.utils.loadingControl.end({ diworkCode: 'calcDeduction' });
+    if (err) {
+        cb.utils.alert('计算失败: ' + err.message, 'error');
+        return;
+    }
+    cb.utils.alert('计算成功', 'success');
+    viewModel.execute('refresh');
+});
+```
+
+**两种 URL 模式的选择**：
+- **相对路径 `+ domainKey`**：适用于标准产品 API，domainKey 作为租户标识传参
+- **绝对路径 `window.location.origin + '/项目路径(domainKey)/api/...'`**：适用于客开项目 API，项目上下文路径作为路由前缀
 
 ### 同步函数调用
 
@@ -484,3 +542,107 @@ viewModel.communication({
 });
 
 // 在 openService 打开的页面中，通过 communication 返回数据给父页面
+```
+
+## 按钮点击 + API 计算 + 刷新模式
+
+常见于自定义计算按钮（如扣吨计算、价格计算等）：
+
+```javascript
+viewModel.get('buttonkdjs') && viewModel.get('buttonkdjs').on('click', () => {
+    // 1. 获取当前单据数据
+    const billData = viewModel.getAllData();
+    if (!billData) {
+        cb.utils.alert('请先加载单据数据', 'warning');
+        return;
+    }
+
+    // 2. 显示确认对话框
+    cb.utils.confirm('确定要执行扣吨计算吗？', () => {
+        // 3. 显示 loading
+        cb.utils.loadingControl.start({ diworkCode: 'calcDeduction' });
+
+        // 4. 调用后端 API
+        const proxy = cb.rest.DynamicProxy.create({
+            calcDeduction: {
+                url: window.location.origin + '/c-po-dev-lihuab/api/pu_arrivalorder/calcDeduction',
+                method: 'POST'
+            }
+        });
+
+        proxy.calcDeduction(billData, (err, result) => {
+            // 5. 结束 loading
+            cb.utils.loadingControl.end({ diworkCode: 'calcDeduction' });
+
+            if (err) {
+                cb.utils.alert('扣吨计算失败: ' + err.message, 'error');
+                return;
+            }
+
+            if (result) {
+                cb.utils.alert('扣吨计算成功', 'success');
+                viewModel.execute('refresh');
+            }
+        });
+    });
+});
+```
+
+## 表格多条件守卫自动计算
+
+当多个字段都有值时触发自动计算，常见于检验/审批场景：
+
+```javascript
+const inspectInfoGrid = viewModel.getGridModel('qms_qit_incominspectorder_bList');
+if (inspectInfoGrid) {
+    inspectInfoGrid.on('afterCellValueChange', ({ cellName, rowIndex }) => {
+        // 仅监听特定字段变更
+        if (cellName !== 'LHYM01' && cellName !== 'LHYM02') {
+            return;
+        }
+
+        const rowData = inspectInfoGrid.getRow(rowIndex);
+        const firstValue = rowData.definect_b.LHYM01;
+        const reValue = rowData.definect_b.LHYM02;
+
+        // 多条件守卫：初检和复检都有值时才计算
+        if (firstValue == null || reValue == null) {
+            inspectInfoGrid.setCellValue(rowIndex, 'inspectvalue_actually', null);
+            return;
+        }
+
+        const proxy = cb.rest.DynamicProxy.create({
+            calcInspectValue: {
+                url: window.location.origin + '/c-po-dev-lihuab/api/qmsqit/calcInspectValue',
+                method: 'POST'
+            }
+        });
+
+        proxy.calcInspectValue({
+            inspectItemCode: rowData.pk_inspect_item_code,
+            firstInspectValue: parseFloat(firstValue),
+            reInspectValue: parseFloat(reValue)
+        }, (err, res) => {
+            if (err) {
+                cb.utils.alert('检验值计算失败: ' + (err.message || '未知错误'), 'error');
+                return;
+            }
+            if (res != null) {
+                inspectInfoGrid.setCellValue(rowIndex, 'inspectvalue_actually', res);
+            }
+        });
+    });
+}
+```
+
+## 自定义字段访问
+
+通过 `rowData` 下自定义特征对应的对象访问自定义字段（如 `LHYM01`、`LHYM02` 等 T-code 字段）。
+
+**注意**：自定义特征对象的名称不固定，取决于该特征分配在哪个表体上。来料检验单的检验信息表体分配的特征对象为 `definect_b`，其他表体可能是 `definect_s`、`userdef_b` 或其他名称，需根据实际单据的特征分配情况确定。
+
+```javascript
+const rowData = grid.getRow(rowIndex);
+// 自定义字段位于特征分配对应的对象下，示例中为 definect_b
+const customValue = rowData.definect_b.LHYM01;
+```

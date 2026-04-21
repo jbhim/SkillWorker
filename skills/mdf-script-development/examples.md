@@ -628,3 +628,114 @@ function downloadTemplate(templateId, fileName) {
             cb.utils.alert('下载失败: ' + err.message, 'error');
         });
 }
+```
+
+---
+
+## 示例 9：到货单扣吨计算按钮
+
+典型按钮交互模式：`getAllData()` → confirm → loading → DynamicProxy POST → alert → refresh。
+
+```javascript
+/**
+ * 到货单 (pu_arrivalorder) 前端扩展脚本
+ */
+viewModel.get('buttonkdjs') && viewModel.get('buttonkdjs').on('click', (data) => {
+    // 1. 获取当前单据数据
+    const billData = viewModel.getAllData();
+    if (!billData) {
+        cb.utils.alert('请先加载单据数据', 'warning');
+        return;
+    }
+
+    // 2. 显示确认对话框
+    cb.utils.confirm('确定要执行扣吨计算吗？', () => {
+        // 3. 显示 loading
+        cb.utils.loadingControl.start({ diworkCode: 'calcDeduction' });
+
+        // 4. 调用扣吨计算接口
+        const proxy = cb.rest.DynamicProxy.create({
+            calcDeduction: {
+                url: window.location.origin + '/c-po-dev-lihuab/api/pu_arrivalorder/calcDeduction',
+                method: 'POST'
+            }
+        });
+
+        proxy.calcDeduction(billData, (err, result) => {
+            // 5. 结束 loading
+            cb.utils.loadingControl.end({ diworkCode: 'calcDeduction' });
+
+            if (err) {
+                cb.utils.alert('扣吨计算失败: ' + err.message, 'error');
+                return;
+            }
+
+            if (result) {
+                cb.utils.alert('扣吨计算成功', 'success');
+                viewModel.execute('refresh');
+            }
+        });
+    });
+});
+```
+
+---
+
+## 示例 10：来料检验单自动计算检验值
+
+典型模式：监听特定单元格变更 → 多条件守卫 → 调 API 计算 → 回写结果到指定单元格。自定义字段通过 `rowData` 下特征分配对应的对象（此处为 `definect_b`）访问。
+
+```javascript
+/**
+ * 来料检验单 (qms_qit_incominspectorder) 前端扩展脚本
+ * 监听检验信息表体的玉米初检/复检结果变更，自动计算并回写检验值
+ */
+const inspectInfoGrid = viewModel.getGridModel('qms_qit_incominspectorder_bList');
+if (inspectInfoGrid) {
+    // data格式为 { rowIndex: '行号', cellName: '列名', value: '新值', oldValue: '旧值' }
+    inspectInfoGrid.on('afterCellValueChange', ({ cellName, rowIndex }) => {
+        // 仅监听玉米初检结果或玉米复检结果变更
+        if (cellName !== 'LHYM01' && cellName !== 'LHYM02') {
+            return;
+        }
+
+        const rowData = inspectInfoGrid.getRow(rowIndex);
+        const firstValue = rowData.definect_b.LHYM01;
+        const reValue = rowData.definect_b.LHYM02;
+
+        // 初检和复检都有值时才计算
+        if (firstValue == null || reValue == null) {
+            // 清空的时候清空标准值
+            inspectInfoGrid.setCellValue(rowIndex, 'inspectvalue_actually', null);
+            return;
+        }
+
+        const inspectItemCode = rowData.pk_inspect_item_code;
+        if (!inspectItemCode) {
+            return;
+        }
+
+        const proxy = cb.rest.DynamicProxy.create({
+            calcInspectValue: {
+                url: window.location.origin + '/c-po-dev-lihuab/api/qmsqit/calcInspectValue',
+                method: 'POST'
+            }
+        });
+
+        proxy.calcInspectValue({
+            inspectItemCode: inspectItemCode,
+            firstInspectValue: parseFloat(firstValue),
+            reInspectValue: parseFloat(reValue)
+        }, (err, res) => {
+            if (err) {
+                cb.utils.alert('检验值计算失败: ' + (err.message || '未知错误'), 'error');
+                return;
+            }
+
+            if (res != null) {
+                inspectInfoGrid.setCellValue(rowIndex, 'inspectvalue_actually', res);
+            }
+        });
+    });
+}
+```
