@@ -204,19 +204,19 @@ def parse_attributes(data):
 
     # 主实体属性
     for attr in data.get("attributes", []):
-        field_name = attr.get("fieldName", "")
-        # 关联属性可能没有 fieldName，用 name 替代
-        if not field_name:
-            field_name = attr.get("name", "")
-        if not field_name:
+        # 编码取 name（业务编码），没有则 fallback 到 fieldName
+        code = attr.get("name", "")
+        if not code:
+            code = attr.get("fieldName", "")
+        if not code:
             continue
 
-        if field_name in seen_field_names:
+        if code in seen_field_names:
             continue
-        seen_field_names.add(field_name)
+        seen_field_names.add(code)
 
         all_attrs.append({
-            "fieldName": field_name,
+            "code": code,
             "displayName": attr.get("title", attr.get("displayName", "")),
             "type": get_type_display(attr),
             "ref": get_ref_display(attr),
@@ -230,15 +230,17 @@ def parse_attributes(data):
     # 扩展实体 (suppliers) 中独有的字段
     for supplier in data.get("suppliers", []):
         for attr in supplier.get("attributes", []):
-            field_name = attr.get("fieldName", "")
-            if not field_name:
+            code = attr.get("name", "")
+            if not code:
+                code = attr.get("fieldName", "")
+            if not code:
                 continue
-            if field_name in seen_field_names:
+            if code in seen_field_names:
                 continue
-            seen_field_names.add(field_name)
+            seen_field_names.add(code)
 
             all_attrs.append({
-                "fieldName": field_name,
+                "code": code,
                 "displayName": attr.get("title", attr.get("displayName", "")),
                 "type": get_type_display(attr),
                 "ref": get_ref_display(attr),
@@ -328,7 +330,7 @@ def generate_md(data, entity_uri):
         table_name = attr["tableName"] if attr["tableName"] else "-"
         col_name = attr["columnName"] if attr["columnName"] else "-"
         lines.append(
-            f"| {i} | {attr['fieldName']} | {attr['displayName']} | {attr['type']} "
+            f"| {i} | {attr['code']} | {attr['displayName']} | {attr['type']} "
             f"| {attr['ref']} | {attr['tags']} | {attr['source']} "
             f"| {table_name} | {col_name} | {desc} |"
         )
