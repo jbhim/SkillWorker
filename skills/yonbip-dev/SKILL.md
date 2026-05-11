@@ -1,6 +1,7 @@
 ---
 name: yonbip-dev
-description: Use when developing on YonBIP platform, needing yht_access_token retrieval, entity metadata queries, or working with YonBIP APIs and services. 用于 YonBIP 平台开发、获取友互通 Token、查询实体元数据等场景
+description: 用于 YonBIP 平台开发、获取友互通 Token、查询实体元数据等场景
+allowed-tools: Bash(python *)
 ---
 
 # YonBIP 开发技能
@@ -21,7 +22,6 @@ digraph when_flowchart {
     "需要查询实体元数据?" [shape=diamond];
     "使用 get_yht_access_token.py" [shape=box];
     "使用 query_entity_info.py" [shape=box];
-    "扩展新能力" [shape=box];
 
     "需要 YonBIP 开发?" -> "需要 yht_access_token?" [label="是"];
     "需要 yht_access_token?" -> "使用 get_yht_access_token.py" [label="是"];
@@ -35,7 +35,7 @@ digraph when_flowchart {
 
 | 脚本 | 用途 | 必需参数 | 依赖 |
 |------|------|----------|------|
-| `scripts/get_yht_access_token.py` | 获取 yht_access_token | userId | 无 |
+| `scripts/get_yht_access_token.py` | 获取 yht_access_token | userId（首次）| 无 |
 | `scripts/query_entity_info.py` | 查询实体元数据 (JSON) | entity_uri | 有效 token 缓存 |
 | `scripts/export_entity_md.py` | 导出实体元数据为 Markdown | entity_uri | 有效 token 缓存 |
 
@@ -52,12 +52,16 @@ digraph when_flowchart {
 ### 获取 Token
 
 ```bash
-python scripts/get_yht_access_token.py <userId>
+python scripts/get_yht_access_token.py <userId> # 指定 userId 获取 token
+python scripts/get_yht_access_token.py          # 使用缓存的 userId 获取 token
+python scripts/get_yht_access_token.py --reset  # 清除缓存
 ```
 
-- 首次调用会请求新 token 并缓存
-- 缓存有效期 12 小时，过期后自动重新获取
-- Token 存储在 `.token-cache/yht_access_token.json`
+- **输出**：仅 token 值输出到 stdout，状态/错误信息输出到 stderr
+- **userId 缓存**：自动缓存到 `.token-cache/user_id.txt`，后续调用无需重复指定
+- **Token 缓存**：有效期 12 小时，过期后自动重新获取
+- **--reset**：清除所有缓存，之后调用需提供 userId
+- **非交互式**：脚本专为 AI 调用设计，无交互输入，userId 通过参数或缓存提供
 
 ### 使用缓存 Token
 
@@ -78,6 +82,8 @@ python scripts/query_entity_info.py areaFormat.model.areaFormatRecord
 3. 跟随重定向获取最终 URL
 4. 从 Cookie 中提取 `yht_access_token`
 5. 缓存到本地文件（12 小时有效）
+
+**非交互式设计**：所有状态信息输出到 stderr，token 值仅输出到 stdout，便于 AI 解析。userId 通过命令行参数或 `.token-cache/user_id.txt` 缓存获取，无需交互输入。
 
 ### scripts/query_entity_info.py
 
@@ -102,7 +108,9 @@ python scripts/export_entity_md.py les.driver.driver
 
 | 错误 | 原因 | 解决方法 |
 |------|------|----------|
-| 未找到缓存文件 | 未先获取 token | 先运行 `scripts/get_yht_access_token.py` |
+| [ERROR] 未配置 userId | 无缓存 userId 且未传参数 | 提供 userId 参数 |
+| [ERROR] 获取 token 失败 | userId 无效或网络问题 | 确认 userId 是否正确 |
+| [ERROR] 未找到缓存文件 | 未先获取 token | 先运行 `scripts/get_yht_access_token.py` |
 | 缓存文件格式无效 | 缓存文件被破坏 | 删除 `.token-cache` 目录重新获取 |
 | HTTP 401/403 | Token 过期或无效 | 删除缓存重新获取 token |
 | 无法解析 location.href | 登录流程变更 | 检查 BASE_URL 是否正确 |

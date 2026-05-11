@@ -2,7 +2,13 @@
 获取友互通 Token (yht_access_token)
 
 用法:
-    python get_yht_access_token.py <userId>
+    python get_yht_access_token.py [userId] [--reset]
+
+说明:
+    - 不带参数时自动使用缓存的 userId
+    - 如果未缓存过 userId，会提示用户输入
+    - 如果获取 token 失败，会提示用户重新确认 userId
+    - --reset 强制重新输入 userId
 
 环境变量:
     YONBIP_BASE_URL - YonBIP 基础 URL (默认: https://lhdftest.yonyoucloud.com)
@@ -19,10 +25,17 @@ import urllib.parse
 from pathlib import Path
 from datetime import datetime, timedelta
 
+# 确保输出使用 UTF-8 编码，避免 Windows 终端乱码
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8')
+
 # 默认配置
 DEFAULT_BASE_URL = "https://lhdftest.yonyoucloud.com"
 CACHE_DIR_NAME = ".token-cache"
 CACHE_FILE_NAME = "yht_access_token.json"
+USER_ID_FILE_NAME = "user_id.txt"
 CACHE_EXPIRE_HOURS = 12  # token 缓存有效期（小时）
 
 
@@ -38,6 +51,22 @@ def get_cache_dir():
         # 脚本在 scripts/ 下，缓存放在技能根目录
         cache_dir = Path(__file__).parent.parent / ".token-cache"
     return Path(cache_dir)
+
+
+def load_cached_user_id():
+    """从缓存加载 userId"""
+    cache_file = get_cache_dir() / USER_ID_FILE_NAME
+    if cache_file.exists():
+        return cache_file.read_text(encoding="utf-8").strip()
+    return None
+
+
+def save_user_id(user_id):
+    """保存 userId 到缓存"""
+    cache_dir = get_cache_dir()
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    cache_file = cache_dir / USER_ID_FILE_NAME
+    cache_file.write_text(user_id, encoding="utf-8")
 
 
 def load_cached_token():
@@ -141,9 +170,7 @@ def get_yht_access_token(user_id):
     url_str = f"{base_url}/cas/exclusive/genLoginTokenByUserIdLimitIp?userId={user_id}"
     res_body = do_get(url_str)
 
-    import json as json_mod
-
-    jo = json_mod.loads(res_body)
+    jo = json.loads(res_body)
     token = jo.get("token")
     if not token:
         raise RuntimeError(f"获取 token 失败，响应: {res_body}")
@@ -183,30 +210,65 @@ def get_yht_access_token(user_id):
     raise RuntimeError("未能从 Cookie 中找到 yht_access_token!")
 
 
+def request_user_id():
+    """请求提供 userId（非交互式，仅输出错误信息供 AI 解析）"""
+    sys.stderr.flush()
+    print("[ERROR] 未配置 userId，无法获取 Token。", file=sys.stderr)
+    print("[ERROR] 请提供 userId 参数，例如: python get_yht_access_token.py <userId>", file=sys.stderr)
+    print("[ERROR] userId 可从浏览器 Cookie 或 YonBIP 个人中心获取。", file=sys.stderr)
+    sys.stderr.flush()
+    sys.exit(1)
+
+
 def main():
-    if len(sys.argv) < 2:
-        print("用法: python get_yht_access_token.py <userId>")
-        print("环境变量: YONBIP_BASE_URL (默认: https://lhdftest.yonyoucloud.com)")
-        sys.exit(1)
+    args = sys.argv[1:]
 
-    user_id = sys.argv[1]
+    # 检查 --reset 参数
+    force_reset = "--reset" in args
+    if force_reset:
+        # 清除缓存的 userId 和 token
+        cache_dir = get_cache_dir()
+        uid_file = cache_dir / USER_ID_FILE_NAME
+        token_file = cache_dir / CACHE_FILE_NAME
+        if uid_file.exists():
+            uid_file.unlink()
+        if token_file.exists():
+            token_file.unlink()
+        print("[重置] 已清除缓存的 userId 和 token。", file=sys.stderr)
 
-    # 尝试从缓存加载
-    cached = load_cached_token()
-    if cached:
-        print(f"[缓存命中] yht_access_token: {cached[:20]}...")
-        print(cached)
+    user_id_from_arg = None
+    for arg in args:
+        if arg != "--reset":
+            user_id_from_arg = arg
+
+    # 尝试从缓存加载 token
+    cached_token = load_cached_token()
+    if cached_token and not force_reset:
+        print(cached_token)
         return
 
-    # 获取新 token
-    print(f"正在获取 token (userId={user_id})...")
+    # 确定 userId：优先使用命令行参数，其次使用缓存
+    if user_id_from_arg:
+        user_id = user_id_from_arg
+    else:
+        user_id = load_cached_user_id()
+        if not user_id:
+            # 非交互式：直接报错，请求用户提供 userId
+            request_user_id()
+
+    # 获取 token
     try:
         token = get_yht_access_token(user_id)
-        save_token(token, user_id)
-        print(f"yht_access_token: {token}")
     except Exception as e:
-        print(f"错误: {e}", file=sys.stderr)
+        error_msg = str(e)
+        print(f"[ERROR] 获取 token 失败 (userId={user_id}): {error_msg}", file=sys.stderr)
+        print(f"[ERROR] userId 可能无效，请确认或更换新 userId。", file=sys.stderr)
         sys.exit(1)
+
+    save_token(token, user_id)
+    if not load_cached_user_id():
+        save_user_id(user_id)
+    print(token)
 
 
 if __name__ == "__main__":

@@ -15,6 +15,12 @@ import json
 import urllib.request
 from pathlib import Path
 
+# 确保输出使用 UTF-8 编码，避免 Windows 终端乱码
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8')
+
 # 默认配置
 DEFAULT_BASE_URL = "https://lhdftest.yonyoucloud.com"
 CACHE_DIR_NAME = ".token-cache"
@@ -39,7 +45,7 @@ def load_token():
     """从缓存加载 token"""
     cache_file = get_cache_dir() / CACHE_FILE_NAME
     if not cache_file.exists():
-        print("错误: 未找到缓存文件，请先运行 get_yht_access_token.py 获取 token", file=sys.stderr)
+        print(f"[ERROR] 未找到缓存文件，请先运行 get_yht_access_token.py 获取 token", file=sys.stderr)
         sys.exit(1)
 
     try:
@@ -47,7 +53,7 @@ def load_token():
             data = json.load(f)
         return data["token"]
     except (json.JSONDecodeError, KeyError) as e:
-        print(f"错误: 缓存文件格式无效: {e}", file=sys.stderr)
+        print(f"[ERROR] 缓存文件格式无效: {e}", file=sys.stderr)
         sys.exit(1)
 
 
@@ -91,23 +97,22 @@ def query_entity_info(uri, token):
 
 def main():
     if len(sys.argv) < 2:
-        print("用法: python query_entity_info.py <entity_uri>")
-        print("示例: python query_entity_info.py areaFormat.model.areaFormatRecord")
+        print("[ERROR] 用法: python query_entity_info.py <entity_uri>", file=sys.stderr)
         sys.exit(1)
 
     uri = sys.argv[1]
     token = load_token()
 
-    print(f"正在查询实体: {uri}...")
+    print(f"[INFO] 正在查询实体: {uri}...", file=sys.stderr)
     try:
         result = query_entity_info(uri, token)
         print(json.dumps(result, indent=2, ensure_ascii=False))
     except urllib.error.HTTPError as e:
-        print(f"HTTP 错误: {e.code} {e.reason}", file=sys.stderr)
-        print(f"响应: {e.read().decode('utf-8')[:500]}", file=sys.stderr)
+        print(f"[ERROR] HTTP 错误: {e.code} {e.reason}", file=sys.stderr)
+        print(f"[ERROR] 响应: {e.read().decode('utf-8')[:500]}", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
-        print(f"错误: {e}", file=sys.stderr)
+        print(f"[ERROR] {e}", file=sys.stderr)
         sys.exit(1)
 
 

@@ -21,6 +21,12 @@ import json
 from pathlib import Path
 from datetime import datetime
 
+# 确保输出使用 UTF-8 编码，避免 Windows 终端乱码
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8')
+
 # 导入共用模块
 sys.path.insert(0, os.path.dirname(__file__))
 from query_entity_info import load_token, query_entity_info
@@ -333,8 +339,7 @@ def generate_md(data, entity_uri):
 
 def main():
     if len(sys.argv) < 2:
-        print("用法: python export_entity_md.py <entity_uri> [output_dir]")
-        print("示例: python export_entity_md.py les.driver.driver")
+        print("[ERROR] 用法: python export_entity_md.py <entity_uri> [output_dir]", file=sys.stderr)
         sys.exit(1)
 
     entity_uri = sys.argv[1]
@@ -343,12 +348,12 @@ def main():
     # 尝试从缓存加载
     cached = load_cached_md(entity_uri)
     if cached:
-        print(f"[缓存命中] 实体: {entity_uri}")
+        print(f"[INFO] 缓存命中: {entity_uri}", file=sys.stderr)
         print(cached)
         return
 
     # 获取 token 并查询
-    print(f"正在查询实体: {entity_uri}...")
+    print(f"[INFO] 正在查询实体: {entity_uri}...", file=sys.stderr)
     token = load_token()
     result = query_entity_info(entity_uri, token)
 
@@ -357,7 +362,7 @@ def main():
 
     # 保存到缓存
     save_md(entity_uri, md)
-    print(f"[已缓存] 实体: {entity_uri}")
+    print(f"[INFO] 已缓存: {entity_uri}", file=sys.stderr)
     print(md)
 
 
