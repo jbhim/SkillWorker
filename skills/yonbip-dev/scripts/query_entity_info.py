@@ -92,7 +92,17 @@ def query_entity_info(uri, token):
     with urllib.request.urlopen(req, timeout=30) as response:
         body = response.read().decode("utf-8")
 
-    return json.loads(body)
+    # Token 无效时服务端返回 HTML 登录页（HTTP 200），而非 JSON 错误
+    content_type = response.headers.get("Content-Type", "")
+    if "text/html" in content_type:
+        raise RuntimeError(
+            "Token 无效或已过期，服务端返回登录页面。请重新运行 get_yht_access_token.py 获取新 token。"
+        )
+
+    try:
+        return json.loads(body)
+    except json.JSONDecodeError as e:
+        raise RuntimeError(f"响应不是有效的 JSON（可能是服务端返回了 HTML 页面）。Token 可能无效。原始错误: {e}")
 
 
 def main():

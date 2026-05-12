@@ -357,7 +357,11 @@ def main():
     # 获取 token 并查询
     print(f"[INFO] 正在查询实体: {entity_uri}...", file=sys.stderr)
     token = load_token()
-    result = query_entity_info(entity_uri, token)
+    try:
+        result = query_entity_info(entity_uri, token)
+    except RuntimeError as e:
+        print(f"[ERROR] {e}", file=sys.stderr)
+        sys.exit(1)
 
     data = result.get("data", {})
     md = generate_md(data, entity_uri)

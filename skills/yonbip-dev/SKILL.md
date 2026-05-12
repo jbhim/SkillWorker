@@ -6,6 +6,16 @@ allowed-tools: Bash(python *)
 
 # YonBIP 开发技能
 
+## 重要：脚本路径
+
+本技能的脚本位于**技能安装目录**下的 `scripts/` 文件夹中。
+
+**必须使用脚本的绝对路径执行，禁止直接使用相对路径 `scripts/xxx.py`。**
+
+使用方式：
+1. 先通过 `ls` 或 `Glob` 找到技能安装目录（通常包含 `SKILL.md` 的 `yonbip-dev` 目录）
+2. 再执行该目录下的 `scripts/` 中的脚本，例如：`python <技能目录>/scripts/get_yht_access_token.py`
+
 ## 概述
 
 YonBIP 开发辅助技能，提供常用脚本简化开发流程。当前支持：
@@ -35,9 +45,9 @@ digraph when_flowchart {
 
 | 脚本 | 用途 | 必需参数 | 依赖 |
 |------|------|----------|------|
-| `scripts/get_yht_access_token.py` | 获取 yht_access_token | userId（首次）| 无 |
-| `scripts/query_entity_info.py` | 查询实体元数据 (JSON) | entity_uri | 有效 token 缓存 |
-| `scripts/export_entity_md.py` | 导出实体元数据为 Markdown | entity_uri | 有效 token 缓存 |
+| `<技能目录>/scripts/get_yht_access_token.py` | 获取 yht_access_token | userId（首次）| 无 |
+| `<技能目录>/scripts/query_entity_info.py` | 查询实体元数据 (JSON) | entity_uri | 有效 token 缓存 |
+| `<技能目录>/scripts/export_entity_md.py` | 导出实体元数据为 Markdown | entity_uri | 有效 token 缓存 |
 
 ## 环境配置
 
@@ -52,9 +62,9 @@ digraph when_flowchart {
 ### 获取 Token
 
 ```bash
-python scripts/get_yht_access_token.py <userId> # 指定 userId 获取 token
-python scripts/get_yht_access_token.py          # 使用缓存的 userId 获取 token
-python scripts/get_yht_access_token.py --reset  # 清除缓存
+python <技能目录>/scripts/get_yht_access_token.py <userId> # 指定 userId 获取 token
+python <技能目录>/scripts/get_yht_access_token.py          # 使用缓存的 userId 获取 token
+python <技能目录>/scripts/get_yht_access_token.py --reset  # 清除缓存
 ```
 
 - **输出**：仅 token 值输出到 stdout，状态/错误信息输出到 stderr
@@ -69,12 +79,14 @@ python scripts/get_yht_access_token.py --reset  # 清除缓存
 
 ```bash
 # 查询实体信息（自动使用缓存的 token）
-python scripts/query_entity_info.py areaFormat.model.areaFormatRecord
+python <技能目录>/scripts/query_entity_info.py areaFormat.model.areaFormatRecord
 ```
 
 ## 脚本说明
 
-### scripts/get_yht_access_token.py
+以下路径中的 `<技能目录>` 指安装本技能后包含 `SKILL.md` 的目录。
+
+### `<技能目录>/scripts/get_yht_access_token.py`
 
 获取友互通 Token 的完整流程：
 1. 调用 `/cas/exclusive/genLoginTokenByUserIdLimitIp` 获取登录 token
@@ -85,14 +97,14 @@ python scripts/query_entity_info.py areaFormat.model.areaFormatRecord
 
 **非交互式设计**：所有状态信息输出到 stderr，token 值仅输出到 stdout，便于 AI 解析。userId 通过命令行参数或 `.token-cache/user_id.txt` 缓存获取，无需交互输入。
 
-### scripts/query_entity_info.py
+### `<技能目录>/scripts/query_entity_info.py`
 
 查询实体元数据：
 - 端点: `/iuap-metadata-base/ext/MDD/entity/db/info`
 - 参数: `uri` (实体 URI)
 - 认证: 使用缓存的 `yht_access_token`
 
-### scripts/export_entity_md.py
+### `<技能目录>/scripts/export_entity_md.py`
 
 导出实体元数据为 Markdown 文档，包含基本信息、约束、属性列表：
 - **自动缓存**：首次查询 API 并生成 Markdown，后续直接从缓存读取
@@ -101,7 +113,7 @@ python scripts/query_entity_info.py areaFormat.model.areaFormatRecord
 
 ```bash
 # 导出实体 Markdown（首次请求 API，后续走缓存）
-python scripts/export_entity_md.py les.driver.driver
+python <技能目录>/scripts/export_entity_md.py les.driver.driver
 ```
 
 ## 常见错误
@@ -110,7 +122,7 @@ python scripts/export_entity_md.py les.driver.driver
 |------|------|----------|
 | [ERROR] 未配置 userId | 无缓存 userId 且未传参数 | 提供 userId 参数 |
 | [ERROR] 获取 token 失败 | userId 无效或网络问题 | 确认 userId 是否正确 |
-| [ERROR] 未找到缓存文件 | 未先获取 token | 先运行 `scripts/get_yht_access_token.py` |
+| [ERROR] 未找到缓存文件 | 未先获取 token | 先运行 `<技能目录>/scripts/get_yht_access_token.py` |
 | 缓存文件格式无效 | 缓存文件被破坏 | 删除 `.token-cache` 目录重新获取 |
 | HTTP 401/403 | Token 过期或无效 | 删除缓存重新获取 token |
 | 无法解析 location.href | 登录流程变更 | 检查 BASE_URL 是否正确 |
